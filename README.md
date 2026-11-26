@@ -4,8 +4,8 @@
 
 This is [PKForge](https://github.com/sofianeelhor/PKForge), the Pokémon save editor built on PKHeX.Core, running as
 Switch 2 homebrew under kaiHEN. It opens the Pokémon saves stored on the console itself, so there is nothing to export
-first, and you edit them with the touch screen or a controller. In this early version, Legends: Z-A is the only game
-it can save to; the [games table](#games) shows what has been tested.
+first, and you edit them with the touch screen or a controller. In this early version it can save to Legends: Z-A,
+Violet, Legends: Arceus and Let's Go Pikachu; the [games table](#games) shows what has been tested.
 
 > [!WARNING]
 > Editing a save can go wrong, and using edited Pokémon online (trades, battles, Pokémon HOME) can get your Nintendo
@@ -62,8 +62,7 @@ and kaiHEN's own README warns that a bad homebrew can brick a console.
 
 | Game | Reading | Writing |
 | --- | --- | --- |
-| Legends: Z-A | Tested on a console | Yes |
-| Violet, Legends: Arceus, Let's Go Pikachu | Tested on a console | Not yet |
+| Legends: Z-A, Violet, Legends: Arceus, Let's Go Pikachu | Tested on a console | Yes, tested on a console |
 | Scarlet, Let's Go Eevee | Same save format as Violet and Let's Go Pikachu | Not yet |
 | Brilliant Diamond, Shining Pearl | Tested on a PC with test saves | Not yet |
 | Sword, Shield | Not tested | Not yet |
@@ -100,8 +99,8 @@ publicly.
 ## Source code
 
 The port's source is on the [`source`](https://github.com/silver115/PKForge-Switch2/tree/source) branch, and each
-release names the tag it was built from (v0.1.1:
-[`switch2-v0.1.1`](https://github.com/silver115/PKForge-Switch2/tree/switch2-v0.1.1)). It is PKForge with the Switch 2
+release names the tag it was built from (v0.2.0:
+[`switch2-v0.2.0`](https://github.com/silver115/PKForge-Switch2/tree/switch2-v0.2.0)). It is PKForge with the Switch 2
 work added in `switch2/`, `src/PKForge.MauiLite/` and `src/PKForge.Switch2.*`.
 [`switch2/README.md`](https://github.com/silver115/PKForge-Switch2/blob/source/switch2/README.md) explains how to build
 it.
