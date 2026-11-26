@@ -1,0 +1,25 @@
+From f48aa146a2bd71b96594b92a65ce1ef5114f1a68 Mon Sep 17 00:00:00 2001
+From: exelix <13405476+exelix11@users.noreply.github.com>
+Date: Sat, 14 Feb 2026 12:06:09 +0100
+Subject: [PATCH 03/28] Set correct core count
+
+(cherry picked from commit 94aedc7f0f210c5707f70bc3b12272bc0bef65c3)
+---
+ src/mono/mono/utils/mono-proclib.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/mono/mono/utils/mono-proclib.c b/src/mono/mono/utils/mono-proclib.c
+index 0853741cf..6a27e9493 100644
+--- a/src/mono/mono/utils/mono-proclib.c
++++ b/src/mono/mono/utils/mono-proclib.c
+@@ -80,6 +80,10 @@ mono_cpu_count (void)
+ 	SYSTEM_INFO info;
+ 	GetSystemInfo (&info);
+ 	return info.dwNumberOfProcessors;
++#elif defined(HOST_LIBNX)
++	// On HOS only 3 cores are available to applications.
++	// Core 3 is deidcated to sysmodules and if we use it we risk freezing the system
++	return 3;
+ #else
+ #ifdef HOST_ANDROID
+ 	/* Android tries really hard to save power by powering off CPUs on SMP phones which

@@ -1,0 +1,42 @@
+From 6a5d2f798829a6709b86d9be20fae1196bc937da Mon Sep 17 00:00:00 2001
+From: exelix <13405476+exelix11@users.noreply.github.com>
+Date: Sat, 14 Feb 2026 16:26:37 +0100
+Subject: [PATCH 04/28] Try to support newlib paths. This allows Assembly.Load
+ to work from "sdmc:/..."
+
+(cherry picked from commit c8c819e1a78f24ab8734790f6add053cd12ec826)
+---
+ src/mono/CMakeLists.txt          | 2 ++
+ src/mono/mono/eglib/gmisc-unix.c | 6 ++++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/src/mono/CMakeLists.txt b/src/mono/CMakeLists.txt
+index 6d1357163..598f7bb21 100644
+--- a/src/mono/CMakeLists.txt
++++ b/src/mono/CMakeLists.txt
+@@ -299,6 +299,8 @@ elseif(CLR_CMAKE_HOST_OS STREQUAL "haiku")
+ elseif(CLR_CMAKE_HOST_OS STREQUAL "libnx")
+   set(HOST_LINUX 1)
+   set(HOST_LIBNX 1)
++  # Symlink handling code does not account for newlib-style paths so disable it. Symlinks won't work on the sd card anyway.
++  set(HOST_NO_SYMLINKS 1)
+   add_definitions(-DHOST_LIBNX)
+   
+   set(DISABLE_SHARED_LIBS 1)
+diff --git a/src/mono/mono/eglib/gmisc-unix.c b/src/mono/mono/eglib/gmisc-unix.c
+index 09557680a..852a93c99 100644
+--- a/src/mono/mono/eglib/gmisc-unix.c
++++ b/src/mono/mono/eglib/gmisc-unix.c
+@@ -102,6 +102,12 @@ g_path_is_absolute (const char *filename)
+ {
+ 	g_return_val_if_fail (filename != NULL, FALSE);
+ 
++#if HOST_LIBNX
++	// Support newlib-style device paths which starts with device:/
++	if (strstr(filename, ":/") != NULL)
++		return TRUE;
++#endif
++
+ 	return (*filename == '/');
+ }
+ 

@@ -26,6 +26,8 @@ public enum EmulatorKind
     MyOldBoy = 12,
     /// <summary>PokeDaisy (mGBA and melonDS front end): standard .sav/.srm saves in the folder chosen at its setup.</summary>
     PokeDaisy = 13,
+    /// <summary>The Switch 2's own save storage (the Switch 2 port): user saves of the Pokémon titles, read per user account.</summary>
+    Console = 14,
 }
 
 /// <summary>A persistable SAF folder grant, opaque to the domain layer.</summary>

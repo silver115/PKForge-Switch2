@@ -1,0 +1,36 @@
+From 23d58d7b7ec4651538660b1f55f31ae19dddcb90 Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Fri, 20 Nov 2026 07:29:14 +0000
+Subject: [PATCH 2/2] Switch: no dynamic loader (SkOSLibrary_posix stubs)
+
+---
+ src/ports/SkOSLibrary_posix.cpp | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/src/ports/SkOSLibrary_posix.cpp b/src/ports/SkOSLibrary_posix.cpp
+index 0bb020064f..111d8200ac 100644
+--- a/src/ports/SkOSLibrary_posix.cpp
++++ b/src/ports/SkOSLibrary_posix.cpp
+@@ -9,6 +9,15 @@
+ 
+ #include "src/ports/SkOSLibrary.h"
+ 
++#if defined(__SWITCH__)
++
++// The Switch has no dynamic loader; nothing in a CPU-raster build loads libraries.
++void* SkLoadDynamicLibrary(const char*) { return nullptr; }
++void* SkGetProcedureAddress(void*, const char*) { return nullptr; }
++bool SkFreeDynamicLibrary(void*) { return false; }
++
++#else
++
+ #include <dlfcn.h>
+ 
+ void* SkLoadDynamicLibrary(const char* libraryName) {
+@@ -23,4 +32,6 @@ bool SkFreeDynamicLibrary(void* library) {
+     return dlclose(library) == 0;
+ }
+ 
++#endif//defined(__SWITCH__)
++
+ #endif//!defined(SK_BUILD_FOR_WIN)

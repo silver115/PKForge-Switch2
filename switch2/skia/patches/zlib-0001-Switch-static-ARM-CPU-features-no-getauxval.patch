@@ -1,0 +1,37 @@
+From 450b5ad14ef8398b0e0983f454a6c0b83d826c68 Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Fri, 20 Nov 2026 07:33:03 +0000
+Subject: [PATCH] Switch: static ARM CPU features (no getauxval)
+
+---
+ cpu_features.c | 7 +++++++
+ deflate.c      | 1 +
+ 2 files changed, 8 insertions(+)
+
+diff --git a/cpu_features.c b/cpu_features.c
+index ac6ee88..612327e 100644
+--- a/cpu_features.c
++++ b/cpu_features.c
+@@ -5,6 +5,13 @@
+  * found in the Chromium source repository LICENSE file.
+  */
+ 
++/* Switch: not Linux (no getauxval), and its Cortex-A78C always has CRC32 and PMULL, so take the static
++ * path Apple's cores use. */
++#if defined(__SWITCH__) && defined(ARMV8_OS_LINUX)
++#undef ARMV8_OS_LINUX
++#define ARMV8_OS_MACOS
++#endif
++
+ #include "cpu_features.h"
+ #include "zutil.h"
+ 
+diff --git a/deflate.c b/deflate.c
+index 1fa55e5..47ee1d7 100644
+--- a/deflate.c
++++ b/deflate.c
+@@ -1,3 +1,4 @@
++#include "../../../include/xamarin/WinRTCompat.h"
+ /* deflate.c -- compress data using the deflation algorithm
+  * Copyright (C) 1995-2022 Jean-loup Gailly and Mark Adler
+  * For conditions of distribution and use, see copyright notice in zlib.h

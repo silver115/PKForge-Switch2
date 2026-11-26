@@ -1,0 +1,68 @@
+# Page open times on the headless host (run with --profile, phase 2 Task 7): Saves, Brilliant Diamond's boxes and its
+# Restore points, three times each, back between. The console's own is switch2/app/PKForge.Switch2/scripts/pages.txt.
+wait 3000
+page HomePage
+# Saves, through its tool tile (by place, as saves.txt).
+tap 218 386
+page SaveLibraryPage
+wait 1500
+press B
+page HomePage
+wait 1500
+tap 218 386
+page SaveLibraryPage
+wait 1500
+press B
+page HomePage
+wait 1500
+tap 218 386
+page SaveLibraryPage
+wait 1500
+press B
+page HomePage
+wait 1500
+tap-text Brilliant Diamond
+page BoxBrowserPage
+wait 1500
+press B
+page HomePage
+wait 1500
+tap-text Brilliant Diamond
+page BoxBrowserPage
+wait 1500
+press B
+page HomePage
+wait 1500
+tap-text Brilliant Diamond
+page BoxBrowserPage
+wait 1500
+# Restore points: Save data (Y), then its Restore tile, by place: the first tap highlights it and the second opens it;
+# later the hub keeps it highlighted, so one tap opens it (a second would land on the list).
+press Y
+wait 1500
+tap 117 320
+wait 300
+tap 117 320
+page BackupHistoryPage
+wait 1500
+expect-pad BackupHistoryPage
+press B
+page BoxBrowserPage
+wait 1500
+press Y
+wait 1500
+tap 117 320
+page BackupHistoryPage
+wait 1500
+expect-pad BackupHistoryPage
+press B
+page BoxBrowserPage
+wait 1500
+press Y
+wait 1500
+tap 117 320
+page BackupHistoryPage
+wait 1500
+expect-pad BackupHistoryPage
+press B
+page BoxBrowserPage

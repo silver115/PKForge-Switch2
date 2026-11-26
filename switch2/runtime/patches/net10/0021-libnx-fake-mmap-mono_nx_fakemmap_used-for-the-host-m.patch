@@ -1,0 +1,40 @@
+From ba31e6ce24b4c34198b71ff645e92c11e83751c8 Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Thu, 19 Nov 2026 23:49:34 +0000
+Subject: [PATCH 21/28] libnx fake mmap: mono_nx_fakemmap_used() for the host
+ memory report
+
+---
+ src/mono/mono/utils/mono-mmap-libnx.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/src/mono/mono/utils/mono-mmap-libnx.c b/src/mono/mono/utils/mono-mmap-libnx.c
+index c12809f52..0a6a092ee 100644
+--- a/src/mono/mono/utils/mono-mmap-libnx.c
++++ b/src/mono/mono/utils/mono-mmap-libnx.c
+@@ -23,6 +23,8 @@
+ // These symbols are exported to be called by the host application. Currently the heap memory is stolen from the newlib allocator.
+ void mono_nx_fakemmap_release(void);
+ void mono_nx_fakemmap_init(intptr_t memory_start, intptr_t memory_end);
++// Bytes of the fake heap that are allocated, for the host's memory report.
++size_t mono_nx_fakemmap_used(void);
+ 
+ // 1-bit state per page, 0 = free, 1 = allocated
+ static u8* page_table;
+@@ -76,6 +78,16 @@ void mono_nx_fakemmap_init(intptr_t memory_start, intptr_t memory_end)
+ 	//g_printf("Fake heap initialized with %zu bytes @ %p (%zu total pages, %zu MB page table size)", memory_size, (void*)heap_start, total_pages, page_table_size / 1024 / 1024);
+ }
+ 
++size_t mono_nx_fakemmap_used(void)
++{
++	size_t pages = 0;
++	pthread_mutex_lock(&page_table_lock);
++	for (size_t i = 0; i < (total_pages + 7) / 8; i++)
++		pages += __builtin_popcount(page_table[i]);
++	pthread_mutex_unlock(&page_table_lock);
++	return pages * MMAP_PAGE_SIZE;
++}
++
+ static inline int is_page_free(int page_index) {
+ 	return (page_table[page_index / 8] & (1 << (page_index % 8))) == 0;
+ }

@@ -1,0 +1,20 @@
+# Each game the headless host seeds opens its boxes from Home, and B goes back (phase 2, Task 6). PKHeX's blank saves of
+# the other eight Switch games are rejected (switch2/findings/phase2.md); the console's own saves cover the games on it
+# (switch2/app/PKForge.Switch2/scripts/games.txt).
+wait 3000
+page HomePage
+# The shelf's order changes between runs, so its cards are found by name.
+tap-text Brilliant Diamond
+wait 4000
+page BoxBrowserPage
+shot games-bd
+press B
+page HomePage
+wait 1500
+# Shining Pearl's save has no Pokémon: its boxes open empty.
+tap-text Shining Pearl
+wait 4000
+page BoxBrowserPage
+shot games-sp
+press B
+page HomePage

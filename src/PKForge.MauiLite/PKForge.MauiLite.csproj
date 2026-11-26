@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- MauiLite: the part of .NET MAUI that PKForge's screens use, drawn with SkiaSharp for the Switch 2.
+       It keeps MAUI's namespaces and member names, so PKForge.App's sources compile against it unchanged. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PKForge.MauiLite</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Ported MAUI files keep their own style; XML doc warnings are not errors here. -->
+    <NoWarn>$(NoWarn);CS1591;CS1573;CS1572;CS1574;CS1587</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Graphics" Version="10.0.20" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="SkiaSharp" Version="3.116.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="PKForge.MauiLite.Tests" />
+  </ItemGroup>
+</Project>

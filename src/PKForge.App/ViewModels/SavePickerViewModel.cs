@@ -108,6 +108,7 @@ public static class SaveDescriptions
         EmulatorKind.MyBoy => "My Boy!",
         EmulatorKind.MyOldBoy => "My OldBoy!",
         EmulatorKind.LinkedFile => "Linked file",
+        EmulatorKind.Console => "Switch 2",
         _ => kind.ToString(),
     };
 }

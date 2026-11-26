@@ -49,3 +49,6 @@ src/PKForge.App/Resources/Raw/sgdb.key
 /docs/*.md
 dist-diagnostic/
 dist/
+
+# Python bytecode (switch2/toolchain tests)
+__pycache__/

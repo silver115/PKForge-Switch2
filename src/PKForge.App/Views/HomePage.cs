@@ -169,6 +169,7 @@ public sealed partial class HomePage : ContentPage, IPadHandler
     /// </summary>
     private static void BlockNativeFocus(View view)
     {
+#if ANDROID
         view.HandlerChanged += (_, _) =>
         {
             if (view.Handler?.PlatformView is Android.Views.View platform)
@@ -177,6 +178,7 @@ public sealed partial class HomePage : ContentPage, IPadHandler
                 platform.FocusableInTouchMode = false;
             }
         };
+#endif
     }
 
     /// <summary>
@@ -188,6 +190,9 @@ public sealed partial class HomePage : ContentPage, IPadHandler
     /// </summary>
     private static void AttachPress(View view, Action onTap, Action onLongPress)
     {
+#if SWITCH2
+        PressGesture.Attach(view, onTap, onLongPress);
+#else
         view.HandlerChanged += (_, _) =>
         {
             if (view.Handler?.PlatformView is not Android.Views.View platform) return;
@@ -231,6 +236,7 @@ public sealed partial class HomePage : ContentPage, IPadHandler
                 e.Handled = true;
             };
         };
+#endif
     }
 
     // Once per launch, not per page: a color scheme change rebuilds Home, and the new page
@@ -792,7 +798,12 @@ public sealed partial class HomePage : ContentPage, IPadHandler
         [
             (new("Restore points", IconPath: "history", Detail: "Put a save back as it was before a change."), Leave(() => PushAsync<BackupHistoryPage>())),
             (new(Services.HardcoreMode.IsOn ? "Hardcore mode: ON" : "Hardcore mode: OFF", IconPath: "hardcore", Detail: "ON allows moves only: no edits, new Pokémon or copies."), Stay(ToggleHardcoreAsync)),
+#if SWITCH2
+            // The console's legality guard (phase 2) refuses illegal Pokémon unless HaX mode is on.
+            (new(Services.HaXMode.IsOn ? "HaX mode: ON" : "HaX mode: OFF", IconPath: "hax", Detail: "ON lets pickers offer any option, even illegal ones. On Switch 2 this also lets illegal Pokémon be saved; using them online can get an account banned."), Stay(ToggleHaXAsync)),
+#else
             (new(Services.HaXMode.IsOn ? "HaX mode: ON" : "HaX mode: OFF", IconPath: "hax", Detail: "ON lets pickers offer any option, even illegal ones."), Stay(ToggleHaXAsync)),
+#endif
             (new(Services.PokemonHistorySetting.IsOn ? "Pokémon History: ON" : "Pokémon History: OFF", IconPath: "history",
                 Detail: "ON returns a Pokémon's old data when it comes back."), Stay(TogglePokemonHistoryAsync)),
             (new(trainerProfiles.UseCurrentTrainerForGeneration ? "Generated Pokémon obey trainer: ON" : "Generated Pokémon obey trainer: OFF", IconPath: "profile",
@@ -1110,7 +1121,9 @@ public sealed partial class HomePage : ContentPage, IPadHandler
         }
         catch (Exception error)
         {
+#if ANDROID
             Android.Util.Log.Warn("PKForgeUpdate", $"Automatic update check failed: {error}");
+#endif
             if (!automatic)
                 _viewModel.Status = $"Update check failed. {Domain.ErrorText.Plain(error)}";
             return;
@@ -1166,7 +1179,9 @@ public sealed partial class HomePage : ContentPage, IPadHandler
         }
         catch (Exception error)
         {
+#if ANDROID
             Android.Util.Log.Error("PKForgeUpdate", $"Download/install failed: {error}");
+#endif
             _viewModel.Status = $"Update failed. {Domain.ErrorText.Plain(error)}";
             var openRelease = await PadMenu.ConfirmAsync(_hostGrid, "Open the release page?",
                 "The in-app installer could not finish. The GitHub release page has the same APK.", "Open");

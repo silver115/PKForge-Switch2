@@ -1,0 +1,7 @@
+findings/inbox/
+out/
+**/build/
+*.nro
+*.elf
+*.nacp
+hello/romfs-big/

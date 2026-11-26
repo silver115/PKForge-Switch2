@@ -1,0 +1,81 @@
+From af78b51cbae25be86ae59b6271c17a682c929147 Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Fri, 20 Nov 2026 07:41:43 +0000
+Subject: [PATCH 3/3] Switch: stubs for the GPU and JPEG/WebP entry points
+ SkiaSharp references
+
+---
+ BUILD.gn                      |  1 +
+ src/xamarin/SkSwitchStubs.cpp | 51 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 52 insertions(+)
+ create mode 100644 src/xamarin/SkSwitchStubs.cpp
+
+diff --git a/BUILD.gn b/BUILD.gn
+index 7109f8f55e..adb386262a 100644
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -3600,6 +3600,7 @@ skiasharp_build("SkiaSharp") {
+     "src/xamarin/SkManagedStream.cpp",
+     "src/xamarin/SkManagedTraceMemoryDump.cpp",
+     "src/xamarin/WinRTCompat.cpp",
++    "src/xamarin/SkSwitchStubs.cpp",
+   ]
+ 
+   libs = []
+diff --git a/src/xamarin/SkSwitchStubs.cpp b/src/xamarin/SkSwitchStubs.cpp
+new file mode 100644
+index 0000000000..cc26cf7afa
+--- /dev/null
++++ b/src/xamarin/SkSwitchStubs.cpp
+@@ -0,0 +1,51 @@
++/*
++ * Switch (libounce): this build has no GPU backend and no JPEG or WebP encoder, but SkiaSharp's C API files that
++ * the app does use also reference them. These answer "not available" (null, false), as Skia does when a feature
++ * is off.
++ */
++#if defined(__SWITCH__)
++
++#include "include/encode/SkJpegEncoder.h"
++#include "include/encode/SkWebpEncoder.h"
++#include "include/gpu/ganesh/SkImageGanesh.h"
++#include "include/gpu/ganesh/SkSurfaceGanesh.h"
++
++namespace SkJpegEncoder {
++bool Encode(SkWStream*, const SkPixmap&, const Options&) { return false; }
++}
++
++namespace SkWebpEncoder {
++bool Encode(SkWStream*, const SkPixmap&, const Options&) { return false; }
++}
++
++namespace SkImages {
++sk_sp<SkImage> AdoptTextureFrom(GrRecordingContext*, const GrBackendTexture&, GrSurfaceOrigin, SkColorType,
++                                SkAlphaType, sk_sp<SkColorSpace>) {
++    return nullptr;
++}
++sk_sp<SkImage> BorrowTextureFrom(GrRecordingContext*, const GrBackendTexture&, GrSurfaceOrigin, SkColorType,
++                                 SkAlphaType, sk_sp<SkColorSpace>, void (*)(void*), void*) {
++    return nullptr;
++}
++sk_sp<SkImage> TextureFromImage(GrDirectContext*, const SkImage*, skgpu::Mipmapped, skgpu::Budgeted) {
++    return nullptr;
++}
++}  // namespace SkImages
++
++namespace SkSurfaces {
++sk_sp<SkSurface> RenderTarget(GrRecordingContext*, skgpu::Budgeted, const SkImageInfo&, int, GrSurfaceOrigin,
++                              const SkSurfaceProps*, bool) {
++    return nullptr;
++}
++sk_sp<SkSurface> WrapBackendRenderTarget(GrRecordingContext*, const GrBackendRenderTarget&, GrSurfaceOrigin,
++                                         SkColorType, sk_sp<SkColorSpace>, const SkSurfaceProps*,
++                                         void (*)(void*), void*) {
++    return nullptr;
++}
++sk_sp<SkSurface> WrapBackendTexture(GrRecordingContext*, const GrBackendTexture&, GrSurfaceOrigin, int, SkColorType,
++                                    sk_sp<SkColorSpace>, const SkSurfaceProps*, void (*)(void*), void*) {
++    return nullptr;
++}
++}  // namespace SkSurfaces
++
++#endif  // defined(__SWITCH__)

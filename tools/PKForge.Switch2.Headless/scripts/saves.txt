@@ -1,0 +1,15 @@
+# Home, then the Saves section through its tool tile, then back to Home with B.
+wait 3000
+page HomePage
+expect Shining Pearl
+expect Brilliant Diamond
+# The Saves tool tile.
+tap 218 386
+wait 2500
+page SaveLibraryPage
+expect Brilliant Diamond
+expect Backup copies 1
+shot saves
+press B
+wait 1500
+page HomePage

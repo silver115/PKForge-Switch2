@@ -1,0 +1,4 @@
+# Boot to Home and take its picture.
+wait 3000
+page HomePage
+shot home

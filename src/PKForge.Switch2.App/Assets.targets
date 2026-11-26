@@ -1,0 +1,38 @@
+<Project>
+  <!-- The Android app's package files (MauiAsset and MauiFont in ../PKForge.App/PKForge.App.csproj), copied to app/ at their
+       MAUI logical names. Generated from that project; AssetListTests fails when the two drift apart. -->
+  <ItemGroup>
+    <Content Include="../PKForge.App/Resources/Fonts/*.ttf" Link="app/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/UI/dex/*.bin.gz" Link="app/dex/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/AppIcon/pkforge.png" Link="app/ui/logo.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/UI/logo/*.png" Link="app/ui/logo/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/UI/egg/*.png" Link="app/ui/egg/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/UI/art/*.png" Link="app/ui/art/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/UI/walker/*.png" Link="app/ui/walker/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/UI/portal/*.png" Link="app/ui/portal/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/BadApple/*" Link="app/badapple/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/Events/*.bin.gz" Link="app/events/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/../../external/PKHeX/PKHeX.Drawing.PokeSprite/Resources/img/Big Pokemon Sprites/*.png" Link="app/sprites/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/../../external/PKHeX/PKHeX.Drawing.PokeSprite/Resources/img/Big Shiny Sprites/*.png" Link="app/sprites/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/UI/lumi/*.png" Link="app/sprites/lumi/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/Showdown/icons.png" Link="app/showdown/icons.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/Showdown/front/*.png" Link="app/showdown/front/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/Showdown/front-shiny/*.png" Link="app/showdown/front-shiny/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/../../external/PKHeX/PKHeX.Drawing.PokeSprite/Resources/img/Artwork Pokemon Sprites/a_9*.png" Link="app/artwork/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/../../external/PKHeX/PKHeX.Drawing.PokeSprite/Resources/img/Artwork Pokemon Sprites/a_10*.png" Link="app/artwork/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/../../external/PKHeX/PKHeX.Drawing.PokeSprite/Resources/img/Artwork Pokemon Sprites/a_*-*.png" Exclude="../PKForge.App/../../external/PKHeX/PKHeX.Drawing.PokeSprite/Resources/img/Artwork Pokemon Sprites/a_9*.png;../PKForge.App/../../external/PKHeX/PKHeX.Drawing.PokeSprite/Resources/img/Artwork Pokemon Sprites/a_10*.png" Link="app/artwork/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/../../external/PKHeX/PKHeX.Drawing.PokeSprite/Resources/img/ball/*.png" Link="app/balls/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/../../external/PKHeX/PKHeX.Drawing.Misc/Resources/img/ribbons/*.png" Link="app/ribbons/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/../../external/PKHeX/PKHeX.Drawing.Misc/Resources/img/box/**/*.png" Link="app/wallpapers/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/../../external/PKHeX/PKHeX.Drawing.Misc/Resources/img/ribbons/ribbonchampionkalos.png" Link="app/ui/pksm/ribbon_award.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/GameArt/*.png" Link="app/gameart/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/GameHero/*.png" Link="app/gamehero/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/GameLogo/*.png" Link="app/gamelogo/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/UI/pksm/*.png" Link="app/ui/pksm/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/UI/tools/*.png" Link="app/ui/tools/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/UI/items/*.png" Link="app/ui/items/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/UI/design/*.png" Link="app/ui/design/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/Pokepark/park/*.png" Link="app/pokepark/park/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../PKForge.App/Resources/Pokepark/widget/*.png" Link="app/pokepark/widget/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

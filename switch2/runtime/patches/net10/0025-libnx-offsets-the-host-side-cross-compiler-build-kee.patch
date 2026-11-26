@@ -1,0 +1,25 @@
+From 22e66704c7c57cdbb9fe6f897841d69d97c935cf Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Fri, 20 Nov 2026 00:04:41 +0000
+Subject: [PATCH 25/28] libnx offsets: the host-side cross compiler build keeps
+ the offsets file (it has no Switch sysroot)
+
+---
+ src/mono/mono.proj | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/mono/mono.proj b/src/mono/mono.proj
+index 82c349e8a..36fe4931c 100644
+--- a/src/mono/mono.proj
++++ b/src/mono/mono.proj
+@@ -1035,7 +1035,9 @@ JS_ENGINES = [NODE_JS]
+ 
+     <!-- offsets tool -->
+     <Message Condition="'$(MonoUseCrossTool)' == 'true'" Text="Running 'PYTHONPATH=$(_LibclangPythonBindingsPath) $(_MonoAotCrossOffsetsCommand)'" Importance="High" />
+-    <Exec Condition="'$(MonoUseCrossTool)' == 'true'" Command="$(_MonoAotCrossOffsetsCommand)" EnvironmentVariables="PYTHONPATH=$(_LibclangPythonBindingsPath)" IgnoreStandardErrorWarningFormat="true" />
++    <!-- libnx: the offsets come from the mono.aotcross build, which has the Switch sysroot; the host-side
++         cross compiler build has none, so it keeps that file as 9.0 did. -->
++    <Exec Condition="'$(MonoUseCrossTool)' == 'true' and ('$(TargetsLibnx)' != 'true' or !Exists('$(MonoAotOffsetsFile)'))" Command="$(_MonoAotCrossOffsetsCommand)" EnvironmentVariables="PYTHONPATH=$(_LibclangPythonBindingsPath)" IgnoreStandardErrorWarningFormat="true" />
+ 
+     <!-- configure -->
+     <PropertyGroup>

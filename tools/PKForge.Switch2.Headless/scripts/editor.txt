@@ -1,0 +1,62 @@
+# Home, Brilliant Diamond's boxes, then slot 1's summary: + opens the menu for the Pokemon under the cursor.
+wait 3000
+page HomePage
+tap-text Brilliant Diamond
+wait 4000
+page BoxBrowserPage
+press Plus
+wait 800
+expect-pad PadMenu
+shot editor-menu
+# "Summary", second in the right column. The menu paints its items, so it is tapped by place: the first tap
+# highlights it and the second chooses it, as PKForge's menus do.
+tap 511 171
+wait 300
+tap 511 171
+wait 2500
+shot summary
+page BoxBrowserPage
+# The live legality verdict: the seeded Pokemon have no moves.
+expect Illegal
+# Right steps through the summary's five pages.
+press Right
+wait 700
+shot summary-stats
+press Right
+wait 700
+shot summary-moves
+press Right
+wait 700
+shot summary-origin
+press Right
+wait 700
+shot summary-legality
+# X: edit this Pokemon in the box browser's editor. A on Species opens the Pokedex picker; B closes it.
+press X
+wait 1200
+shot editor
+press A
+wait 1200
+shot editor-species
+press B
+wait 800
+# Down to Shiny (Nickname, Gender, Shiny): A flips it, a change made without the keyboard.
+press Down
+wait 300
+press Down
+wait 300
+press Down
+wait 300
+press A
+wait 600
+# B leaves the editor: "Save changes" tries to write the save, which this build refuses.
+press B
+wait 800
+# The prompt can take longer than the wait: A before it would use the editor's field instead.
+expect-pad PadMenu
+press A
+wait 1500
+shot editor-saved
+expect is not verified yet
+# After the refusal PKForge repeats the B that asked about the edit, on whatever button comes next, so where the app
+# goes from here depends on it; text fields are tested with the keyboard (phase 2, Task 5) instead.

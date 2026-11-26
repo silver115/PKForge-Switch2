@@ -1,0 +1,21 @@
+// Ported from dotnet/maui 10.0.20, src/Core/src/Layouts/StackLayoutManager.cs (MIT licence; see THIRD-PARTY.md).
+using System;
+using Microsoft.Maui.Graphics;
+
+namespace Microsoft.Maui.Layouts
+{
+	public abstract class StackLayoutManager : LayoutManager
+	{
+		public StackLayoutManager(IStackLayout stack) : base(stack)
+		{
+			Stack = stack;
+		}
+
+		public IStackLayout Stack { get; }
+
+		protected static double MeasureSpacing(double spacing, int childCount)
+		{
+			return childCount > 1 ? (childCount - 1) * spacing : 0;
+		}
+	}
+}

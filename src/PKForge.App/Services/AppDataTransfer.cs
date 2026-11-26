@@ -1,5 +1,7 @@
 using System.Globalization;
+#if ANDROID
 using Android.Content;
+#endif
 using PKForge.Domain;
 using PKForge.Infrastructure;
 
@@ -19,6 +21,7 @@ public static class AppDataTransfer
     /// <summary>Safety archives live beside the data but outside what an archive holds.</summary>
     public static string SafetyFolder => Path.Combine(Root, "data-safety");
 
+#if ANDROID
     // MAUI keeps Preferences.Default in the app's default shared preferences file.
     private static ISharedPreferences Store =>
         Android.App.Application.Context.GetSharedPreferences($"{Android.App.Application.Context.PackageName}_preferences", FileCreationMode.Private)
@@ -60,6 +63,14 @@ public static class AppDataTransfer
         }
         if (!editor.Commit()) throw new IOException("The settings could not be saved.");
     }
+#else
+    // shortcut: Switch 2 archives carry no preferences until the data archive update (phase 4) keeps their types.
+    public static IReadOnlyList<PreferenceValue> ReadPreferences() =>
+        throw new NotSupportedException("Settings are not in data archives on Switch 2 yet.");
+
+    public static void ApplyPreferences(IReadOnlyList<PreferenceValue> values) =>
+        throw new NotSupportedException("Settings are not in data archives on Switch 2 yet.");
+#endif
 
     /// <summary>Writes an archive of everything here to <paramref name="path"/>.</summary>
     public static DataArchiveManifest ExportTo(string path)

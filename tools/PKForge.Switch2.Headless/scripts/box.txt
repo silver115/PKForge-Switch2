@@ -1,0 +1,36 @@
+# Home, then Brilliant Diamond's boxes through its shelf card.
+wait 3000
+page HomePage
+# The shelf's order changes between runs, so its card is found by name.
+tap-text Brilliant Diamond
+wait 4000
+page BoxBrowserPage
+shot box1
+# A tap on slot 2 selects Charizard and fills the summary.
+tap 140 144
+wait 1000
+shot box-tap
+expect Charizard
+# Multi-select (-), then a drag from slot 1 to slot 3 marks the three. The drag takes a second: a finger still for
+# 450 ms on a slot carries the selection instead, and the first frames here are slow. B clears the marks, then B
+# again leaves multi-select.
+press Minus
+wait 400
+drag 61 144 219 144 1000
+wait 600
+shot box-select
+expect Actions (3)
+press B
+wait 300
+press B
+wait 400
+# R and L change boxes; R held repeats. The box name is painted, so the shots show which box is up.
+press R
+wait 800
+shot box2
+hold R 1500
+wait 800
+shot box-held
+press L
+wait 800
+shot box-back

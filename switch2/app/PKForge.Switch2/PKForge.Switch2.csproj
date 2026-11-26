@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- PKForge on the Switch 2: the console entry point. switch2/host/build.sh publishes it and compiles it with Mono's AOT. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PKForge.Switch2</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../src/PKForge.Switch2.App/PKForge.Switch2.App.csproj" />
+    <!-- Test scripts for the console's real saves (netload.py with a script name), in romfs at /app/scripts. -->
+    <Content Include="scripts/*.txt" Link="app/scripts/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

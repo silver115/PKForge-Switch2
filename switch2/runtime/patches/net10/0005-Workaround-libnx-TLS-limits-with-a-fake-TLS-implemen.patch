@@ -1,0 +1,229 @@
+From 57c0bdc36aea2b0d0d12c07b28bfabfbef7d0b2b Mon Sep 17 00:00:00 2001
+From: exelix <13405476+exelix11@users.noreply.github.com>
+Date: Sun, 22 Feb 2026 20:53:48 +0100
+Subject: [PATCH 05/28] Workaround libnx TLS limits with a fake TLS
+ implementation
+
+(cherry picked from commit 105098ca351b0bca45d849369d15b830ddfb3fa4)
+---
+ src/mono/mono/utils/mono-tls.c | 143 +++++++++++++++++++++++++++++++++
+ src/mono/mono/utils/mono-tls.h |  36 ++++++++-
+ 2 files changed, 175 insertions(+), 4 deletions(-)
+
+diff --git a/src/mono/mono/utils/mono-tls.c b/src/mono/mono/utils/mono-tls.c
+index b3d6d184a..086b4c458 100644
+--- a/src/mono/mono/utils/mono-tls.c
++++ b/src/mono/mono/utils/mono-tls.c
+@@ -195,3 +195,146 @@ G_EXTERN_C MonoLMF **mono_tls_get_lmf_addr_extern (void)
+ {
+ 	return mono_tls_get_lmf_addr ();
+ }
++
++#if HOST_LIBNX
++
++#include <switch.h>
++#include "mono-logger-internals.h"
++
++// libnx has a limit of 12 TLS slot, mono needs more.
++// Here we "multiplex" a single TLS slot to workaround this limitation
++
++#define TLS_EMU_MAX_KEYS 32
++#define KEY(i) (1ULL << (i))
++
++typedef void (*TlsDestructor)(void*);
++
++static Mutex g_tls_mutex = INVALID_HANDLE;
++static s32 g_fake_tls_key = -1;
++static u64 g_my_key_bitmap;
++static TlsDestructor g_destructors[TLS_EMU_MAX_KEYS];
++
++typedef struct
++{
++	u64 bitmap;
++	void* items[TLS_EMU_MAX_KEYS];
++	bool being_destroyed;
++} emulated_tls_data;
++
++static void tls_thread_destructor(void* data)
++{
++	if (!data)
++		return;
++	
++	mono_trace_message (MONO_TRACE_DIAGNOSTICS, "Running fake TLS destructor for %p\n", data);
++
++	emulated_tls_data* tls = (emulated_tls_data*)data;
++	for (int i = 0; i < TLS_EMU_MAX_KEYS; i++)
++	{
++		// If this key is not valid, or has been freed, skip it
++		// The call to a destructor may free other keys so we need to check this every time
++		if (!(g_my_key_bitmap & KEY(i)))
++			continue;
++
++		// If this thread does not use this key, skip it
++		if (!(tls->bitmap & KEY(i)))
++
++		if (g_destructors[i])
++		{
++			void* value = tls->items[i];
++			tls->items[i] = NULL;
++			tls->bitmap &= ~KEY(i);
++			g_destructors[i](value);
++
++			if (tls->bitmap & KEY(i))
++				g_error("TLS destructor for key %d re-set the value, which is not supported", i);
++		}
++	}
++}	
++
++static emulated_tls_data* fake_tls_get(void)
++{
++	emulated_tls_data* ptr = threadTlsGet(g_fake_tls_key);	
++	if (ptr)
++		return ptr;
++
++	ptr = calloc(1, sizeof(emulated_tls_data));
++	g_assert(ptr);
++
++	threadTlsSet(g_fake_tls_key, ptr);
++
++	mono_trace_message (MONO_TRACE_DIAGNOSTICS, "Allocated fake TLS for %p\n", ptr);
++	return ptr;
++}
++
++int mono_native_tls_alloc (MonoNativeTlsKey *key, void *destructor)
++{
++	mutexLock(&g_tls_mutex);
++
++	if (g_fake_tls_key == -1) 
++	{
++		g_fake_tls_key = threadTlsAlloc(tls_thread_destructor);
++		if (g_fake_tls_key == -1)
++			g_error("Failed to initialize fake_tls");
++	}
++
++	u64 bitmap = g_my_key_bitmap;
++	
++	int index = __builtin_ffs(~bitmap) - 1;
++	if (index < 0 || index >= TLS_EMU_MAX_KEYS) 
++		g_error("Out of TLS slots");
++
++    g_my_key_bitmap = bitmap | KEY(index);
++	g_destructors[index] = (TlsDestructor)destructor;
++	
++	*key = index;
++
++	mutexUnlock(&g_tls_mutex);
++
++	return 1;
++}
++
++void mono_native_tls_free (MonoNativeTlsKey key)
++{	
++	mutexLock(&g_tls_mutex);
++	if (key < 0 || key >= TLS_EMU_MAX_KEYS)
++		g_error("mono_native_tls_free called with Invalid TLS key");
++
++	u64 bitmap = g_my_key_bitmap;
++	if (!(bitmap & KEY(key)))
++		g_error("mono_native_tls_free called with free TLS key");
++        
++    g_my_key_bitmap = bitmap & ~KEY(key);	
++	g_destructors[key] = NULL;
++
++	mutexUnlock(&g_tls_mutex);
++}
++
++static void ensure_key_valid(MonoNativeTlsKey key)
++{
++	if (key < 0 || key >= TLS_EMU_MAX_KEYS)
++		g_error("Invalid TLS key");
++
++	if (!(g_my_key_bitmap & KEY(key)))
++		g_error("TLS key already freed");
++}
++
++int mono_native_tls_set_value (MonoNativeTlsKey key, gpointer value)
++{
++	ensure_key_valid(key);
++
++	emulated_tls_data* data = fake_tls_get();
++	data->items[key] = value;
++	data->bitmap |= KEY(key);
++	return 1;
++}
++
++void* mono_native_tls_get_value (MonoNativeTlsKey key)
++{
++	ensure_key_valid(key);
++
++	emulated_tls_data* data = fake_tls_get();
++	return data->items[key];
++}
++
++#endif
+\ No newline at end of file
+diff --git a/src/mono/mono/utils/mono-tls.h b/src/mono/mono/utils/mono-tls.h
+index 05701876a..88f1d947a 100644
+--- a/src/mono/mono/utils/mono-tls.h
++++ b/src/mono/mono/utils/mono-tls.h
+@@ -96,17 +96,36 @@ mono_native_tls_get_value (unsigned index)
+ 	return p ? p [index - TLS_MINIMUM_AVAILABLE] : NULL;
+ }
+ 
+-#else
++#elif HOST_LIBNX
++
++#define MonoNativeTlsKey int32_t
++
++int mono_native_tls_alloc (MonoNativeTlsKey *key, void *destructor);
++
++void mono_native_tls_free (MonoNativeTlsKey key);
++
++int mono_native_tls_set_value (MonoNativeTlsKey key, gpointer value);
++
++void* mono_native_tls_get_value (MonoNativeTlsKey key_index);
+ 
++#else
+ #include <pthread.h>
+ 
+ #define MonoNativeTlsKey pthread_key_t
+-#define mono_native_tls_get_value pthread_getspecific
+ 
+ MONO_INLINE int
+ mono_native_tls_alloc (MonoNativeTlsKey *key, void *destructor)
+ {
+-	return pthread_key_create (key, (void (*)(void*)) destructor) == 0;
++	int result = pthread_key_create (key, (void (*)(void*)) destructor);
++	if (result != 0) {
++		printf("Failed to allocate TLS key with error %d\n", result);
++		g_error("Failed to allocate TLS key");
++	}
++	else 
++	{
++		printf("Allocated TLS key %d\n", *key);
++	}
++	return result == 0;
+ }
+ 
+ MONO_INLINE void
+@@ -117,10 +136,19 @@ mono_native_tls_free (MonoNativeTlsKey key)
+ 
+ MONO_INLINE int
+ mono_native_tls_set_value (MonoNativeTlsKey key, gpointer value)
+-{
++{	
++	//printf ("Setting TLS key %d to %p\n", key, value);
+ 	return !pthread_setspecific (key, value);
+ }
+ 
++MONO_INLINE const void*
++mono_native_tls_get_value(MonoNativeTlsKey key_index)
++{
++	const void* key = pthread_getspecific(key_index);
++	//printf ("Getting TLS key %d = %p\n", key_index, key);
++	return key;
++}
++
+ #endif /* HOST_WIN32 */
+ 
+ void mono_tls_init_gc_keys (void);

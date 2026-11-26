@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- PKForge's MAUI app, compiled again for the Switch 2 against MauiLite. The screens are the Android app's own sources
+       (../PKForge.App), minus Platforms/; Switch 2 differences sit behind #if SWITCH2 there, or in Switch2/ here. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PKForge.App</RootNamespace>
+    <AssemblyName>PKForge.Switch2.App</AssemblyName>
+    <DefineConstants>$(DefineConstants);SWITCH2</DefineConstants>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../PKForge.App/**/*.cs" Exclude="../PKForge.App/Platforms/**;../PKForge.App/obj/**;../PKForge.App/bin/**" />
+    <Compile Include="Switch2/**/*.cs" />
+    <!-- Android-only helpers, replaced by Switch2/ files with the same public members. -->
+    <Compile Remove="../PKForge.App/Services/VsyncLoop.cs;../PKForge.App/Views/WidgetMenu.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- MAUI's implicit global usings, for the namespaces MauiLite defines. -->
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Maui" />
+    <Using Include="Microsoft.Maui.ApplicationModel" />
+    <Using Include="Microsoft.Maui.ApplicationModel.DataTransfer" />
+    <Using Include="Microsoft.Maui.Controls" />
+    <Using Include="Microsoft.Maui.Controls.Hosting" />
+    <Using Include="Microsoft.Maui.Devices" />
+    <Using Include="Microsoft.Maui.Dispatching" />
+    <Using Include="Microsoft.Maui.Graphics" />
+    <Using Include="Microsoft.Maui.Hosting" />
+    <Using Include="Microsoft.Maui.Networking" />
+    <Using Include="Microsoft.Maui.Storage" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="ZXing.Net" Version="0.16.10" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../PKForge.Domain/PKForge.Domain.csproj" />
+    <ProjectReference Include="../PKForge.Chrome/PKForge.Chrome.csproj" />
+    <ProjectReference Include="../PKForge.Engine/PKForge.Engine.csproj" />
+    <ProjectReference Include="../PKForge.Infrastructure/PKForge.Infrastructure.csproj" />
+    <ProjectReference Include="../PKForge.MauiLite/PKForge.MauiLite.csproj" />
+    <ProjectReference Include="../PKForge.Switch2.Platform/PKForge.Switch2.Platform.csproj" />
+  </ItemGroup>
+  <Import Project="Assets.targets" />
+  <!-- Mystery-gift packs newer than the Android app's (Switch2/Events/SOURCE.md), in place of its copies. -->
+  <ItemGroup>
+    <Content Remove="../PKForge.App/Resources/Events/*.bin.gz" />
+    <Content Include="Switch2/Events/*.bin.gz" Link="app/events/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

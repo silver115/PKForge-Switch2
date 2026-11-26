@@ -1,0 +1,22 @@
+# PKForge for Switch 2 build host, as a Docker Compose stack on a NAS.
+# Deployed in a stack folder (PKF_NAS_STACK on the PC), with the repo mirrored into ./work/pkforge by nas-job.ps1.
+# The container runs the jobs the PC drops into ./work/jobs (see runner.sh).
+services:
+  builder:
+    build:
+      context: ./work/pkforge/switch2/toolchain
+    image: pkforge-switch2
+    container_name: pkforge-switch2
+    restart: unless-stopped
+    working_dir: /work/pkforge
+    environment:
+      PKF_DEPS: /deps
+    volumes:
+      - ./work/pkforge:/work/pkforge
+      - ./work/jobs:/work/jobs
+      # Mono and Skia sources need a case-sensitive Linux filesystem, so they live in a Docker volume.
+      - deps:/deps
+    command: ["sh", "/work/pkforge/switch2/toolchain/runner.sh"]
+
+volumes:
+  deps: {}

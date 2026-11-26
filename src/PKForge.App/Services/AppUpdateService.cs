@@ -1,5 +1,7 @@
 using System.Text.Json;
+#if ANDROID
 using Android.App;
+#endif
 using PKForge.Domain;
 
 #if ANDROID
@@ -202,6 +204,11 @@ public sealed class AppUpdateService
             || maker.Equals("POCO", StringComparison.OrdinalIgnoreCase)
             || maker.Equals("Redmi", StringComparison.OrdinalIgnoreCase));
 #pragma warning restore CA1416
+#else
+    // Other platforms install nothing themselves: they open the release page instead.
+    private static bool CanRequestInstalls() => false;
+
+    public static void OpenInstallPermissionSettings() { }
 #endif
 }
 

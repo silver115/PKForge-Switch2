@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- An empty assembly for full AOT's dedup mode (build.sh aot): Mono compiles the generic code that every assembly
+       instantiates into its image once, in place of a copy in each assembly's image. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>aot-instances</AssemblyName>
+    <!-- CS2008: there is no source, on purpose. -->
+    <NoWarn>$(NoWarn);CS2008</NoWarn>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,38 @@
+From c463b03b3478a426b4da6cb4f8a94dcd4df66029 Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Fri, 20 Nov 2026 07:44:39 +0000
+Subject: [PATCH 28/28] libnx AOT: method address table in .text (out of branch
+ range in .data.rel.ro in large static binaries)
+
+---
+ src/mono/mono/mini/aot-compiler.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/src/mono/mono/mini/aot-compiler.c b/src/mono/mono/mini/aot-compiler.c
+index 9598e9d3f..60ad21f5b 100644
+--- a/src/mono/mono/mini/aot-compiler.c
++++ b/src/mono/mono/mini/aot-compiler.c
+@@ -112,7 +112,10 @@ get_method_nofail (MonoClass *klass, const char *method_name, int param_count, i
+ #define EMIT_WIN32_UNWIND_INFO
+ #endif
+ 
+-#if defined(TARGET_ANDROID) || defined(__linux__)
++/* libnx: the method address table is a table of branches; in .data.rel.ro the linker places it after all code,
++ * out of branch range in a large static binary, so it stays in .text beside its methods. __linux__ is only
++ * the build machine here. */
++#if (defined(TARGET_ANDROID) || defined(__linux__)) && !defined(TARGET_LIBNX)
+ #define RODATA_REL_SECT ".data.rel.ro"
+ #else
+ #define RODATA_REL_SECT ".text"
+@@ -11024,7 +11027,10 @@ emit_code (MonoAotCompile *acfg)
+ 	 * To work around linker issues, we emit a table of branches, and disassemble them at runtime.
+ 	 * This is PIE code, and the linker can update it if needed.
+ 	 */
+-#if defined(TARGET_ANDROID) || defined(__linux__)
++/* libnx: the method address table is a table of branches; in .data.rel.ro the linker places it after all code,
++ * out of branch range in a large static binary, so it stays in .text beside its methods. __linux__ is only
++ * the build machine here. */
++#if (defined(TARGET_ANDROID) || defined(__linux__)) && !defined(TARGET_LIBNX)
+ 	gboolean is_func = FALSE;
+ #else
+ 	gboolean is_func = TRUE;

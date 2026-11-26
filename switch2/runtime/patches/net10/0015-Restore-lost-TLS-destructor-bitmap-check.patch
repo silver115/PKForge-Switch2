@@ -1,0 +1,31 @@
+From 8c3a83e0a2d9857aca6a60381356fb2c626e2056 Mon Sep 17 00:00:00 2001
+From: exelix <13405476+exelix11@users.noreply.github.com>
+Date: Fri, 11 Sep 2026 23:56:07 +0200
+Subject: [PATCH 15/28] Restore lost TLS destructor bitmap check
+
+(cherry picked from commit 289cdaa5d288809891e3e2fbac82cd6e0cdcfcd7)
+---
+ src/mono/mono/utils/mono-tls.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/mono/mono/utils/mono-tls.c b/src/mono/mono/utils/mono-tls.c
+index 086b4c458..b72018775 100644
+--- a/src/mono/mono/utils/mono-tls.c
++++ b/src/mono/mono/utils/mono-tls.c
+@@ -238,6 +238,7 @@ static void tls_thread_destructor(void* data)
+ 
+ 		// If this thread does not use this key, skip it
+ 		if (!(tls->bitmap & KEY(i)))
++			continue;
+ 
+ 		if (g_destructors[i])
+ 		{
+@@ -246,6 +247,8 @@ static void tls_thread_destructor(void* data)
+ 			tls->bitmap &= ~KEY(i);
+ 			g_destructors[i](value);
+ 
++			mono_trace_message (MONO_TRACE_DIAGNOSTICS, "Ran g_destructors[%d] for value %p\n", i, value);
++
+ 			if (tls->bitmap & KEY(i))
+ 				g_error("TLS destructor for key %d re-set the value, which is not supported", i);
+ 		}

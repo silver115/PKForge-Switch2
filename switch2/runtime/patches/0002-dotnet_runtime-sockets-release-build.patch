@@ -1,0 +1,26 @@
+From 921c6b3e7ba86f90f54335ad176009fe3c31e702 Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Thu, 19 Nov 2026 08:09:40 +0000
+Subject: [PATCH] Release build: log libnx socket events with Debug, not
+ Console
+
+---
+ .../src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs           | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs b/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs
+index d11838381..cb4641a49 100644
+--- a/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs
++++ b/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs
+@@ -23,7 +23,7 @@ internal sealed unsafe class SocketAsyncEngine : IThreadPoolWorkItem
+         private static void Log(string str)
+         {
+             if (Logging)
+-                Console.WriteLine(str);
++                Debug.WriteLine(str);
+         }
+ 
+         // Socket continuations are dispatched to the ThreadPool from the event thread.
+-- 
+2.39.5
+

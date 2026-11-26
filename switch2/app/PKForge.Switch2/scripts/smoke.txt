@@ -1,0 +1,12 @@
+# The console's smoke test (netload.py --script smoke), on its real saves: Home, Legends: Z-A's boxes, and back.
+# Read-only: nothing is written to a save.
+wait 3000
+page HomePage
+expect Legends: Z-A
+shot home
+tap-text Legends: Z-A
+page BoxBrowserPage
+wait 2000
+shot box
+press B
+page HomePage

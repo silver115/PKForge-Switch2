@@ -1,0 +1,32 @@
+From 23bf34168add6dc63736cd4c8b71c275df414e4c Mon Sep 17 00:00:00 2001
+From: exelix <13405476+exelix11@users.noreply.github.com>
+Date: Sat, 4 Jul 2026 16:46:50 +0200
+Subject: [PATCH 08/28] Build System.Security.Cryptography for libnx
+
+(cherry picked from commit cc525412485d2d7ac72f06f80d85d1763bc57252)
+---
+ .../src/System.Security.Cryptography.csproj                   | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/libraries/System.Security.Cryptography/src/System.Security.Cryptography.csproj b/src/libraries/System.Security.Cryptography/src/System.Security.Cryptography.csproj
+index 483f002ea..140f132c4 100644
+--- a/src/libraries/System.Security.Cryptography/src/System.Security.Cryptography.csproj
++++ b/src/libraries/System.Security.Cryptography/src/System.Security.Cryptography.csproj
+@@ -1,7 +1,7 @@
+ <Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+-    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-android;$(NetCoreAppCurrent)-osx;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)</TargetFrameworks>
++    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-android;$(NetCoreAppCurrent)-osx;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)-libnx;$(NetCoreAppCurrent)</TargetFrameworks>
+     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+     <DefineConstants>$(DefineConstants);INTERNAL_ASYMMETRIC_IMPLEMENTATIONS;SYSTEM_SECURITY_CRYPTOGRAPHY</DefineConstants>
+     <NoWarn>$(NoWarn);CA5350;CA5351;CA5379;CA5384;SYSLIB0026</NoWarn>
+@@ -822,7 +822,7 @@
+     </Compile>
+   </ItemGroup>
+ 
+-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'browser'">
++  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'browser' or '$(TargetPlatformIdentifier)' == 'libnx'">
+     <!-- GetRandomBytes is identical on Unix and Browser -->
+     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.GetRandomBytes.cs"
+              Link="Common\Interop\Unix\System.Native\Interop.GetRandomBytes.cs" />

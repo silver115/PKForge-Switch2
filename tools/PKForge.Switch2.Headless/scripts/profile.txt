@@ -1,0 +1,15 @@
+# Walks Home, the Saves section and a save's box browser, for --profile.
+wait 3000
+page HomePage
+wait 2000
+# The Saves tool tile.
+tap 218 386
+wait 3000
+shot profile-saves
+press B
+wait 1500
+# The Brilliant Diamond shelf card.
+tap 242 214
+wait 4000
+shot profile-box
+wait 3000

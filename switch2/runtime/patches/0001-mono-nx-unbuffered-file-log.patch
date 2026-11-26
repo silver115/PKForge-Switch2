@@ -1,0 +1,24 @@
+From aa693e66c57206a8f775c33f68dff9147c2b6c4d Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Thu, 19 Nov 2026 23:11:57 +0000
+Subject: [PATCH] Unbuffered file log, so a crash keeps the log
+
+---
+ native/shared/io_util.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/native/shared/io_util.c b/native/shared/io_util.c
+index 249ab09..ae57403 100644
+--- a/native/shared/io_util.c
++++ b/native/shared/io_util.c
+@@ -228,6 +228,7 @@ int io_stdio_to_file(const char* filename)
+     if (!file_log_handle)
+         return -1;
+ 
++    setvbuf(file_log_handle, NULL, _IONBF, 0); // unbuffered: keep every line if the process dies
+     fprintf(file_log_handle, "--- starting log ---\n");
+ 
+     if (redirect_newlib_io(file_log_write) < 0)
+-- 
+2.39.5
+

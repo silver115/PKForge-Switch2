@@ -1,0 +1,38 @@
+# The box browser's painting on the console (netload.py --script box --report, phase 2 Task 8): Legends: Z-A's boxes,
+# the cursor across box 1's top row and down its last column, then two boxes on and back. Read-only: moving the cursor
+# and paging change nothing in the save. frame.BoxBrowserPage.draws in the results names each painter.
+wait 3000
+page HomePage
+tap-text Legends: Z-A
+page BoxBrowserPage
+wait 2500
+press Right
+wait 250
+press Right
+wait 250
+press Right
+wait 250
+press Right
+wait 250
+press Right
+wait 250
+press Down
+wait 250
+press Down
+wait 250
+press Down
+wait 250
+press Down
+wait 250
+# R and L page the boxes.
+press R
+wait 800
+press R
+wait 800
+press L
+wait 800
+press L
+wait 800
+shot box-after
+press B
+page HomePage

@@ -1,0 +1,40 @@
+From 65c49427993a3f7577de8f2fdc7c219ee3c53b06 Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Thu, 19 Nov 2026 23:51:49 +0000
+Subject: [PATCH 22/28] libnx sockets on 10.0: unregister by handle, literal
+ message for the dropped resource string
+
+---
+ .../src/System/Net/Sockets/SocketAsyncContext.Unix.cs         | 4 ++++
+ .../src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs         | 2 +-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncContext.Unix.cs b/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncContext.Unix.cs
+index b4575486a..b4845bf95 100644
+--- a/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncContext.Unix.cs
++++ b/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncContext.Unix.cs
+@@ -1342,7 +1342,11 @@ public bool StopAndAbort()
+             // The Register method will throw ODE when it tries to use the handle at this point.
+             if (IsRegistered)
+             {
++#if TARGET_LIBNX
++                _asyncEngine!.UnregisterSocket(_socket.DangerousGetHandle());
++#else
+                 SocketAsyncEngine.UnregisterSocket(this);
++#endif
+             }
+ 
+             return aborted;
+diff --git a/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs b/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs
+index cb4641a49..49427cd13 100644
+--- a/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs
++++ b/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs
+@@ -107,7 +107,7 @@ private bool TryRegisterCore(IntPtr socketHandle, SocketAsyncContext context, ou
+             {
+                 // Using public SafeSocketHandle(IntPtr) a user can add the same handle
+                 // from a different Socket instance.
+-                throw new InvalidOperationException(SR.net_sockets_handle_already_used);
++                throw new InvalidOperationException("The handle is already used by another Socket.");
+             }
+ 
+             lock (_handleList)

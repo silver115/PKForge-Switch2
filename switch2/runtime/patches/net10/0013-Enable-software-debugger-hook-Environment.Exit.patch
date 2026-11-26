@@ -1,0 +1,48 @@
+From 8e06e1efab04853d53865ec1ba3526e549de3c69 Mon Sep 17 00:00:00 2001
+From: exelix <13405476+exelix11@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 13:07:56 +0200
+Subject: [PATCH 13/28] Enable software debugger, hook Environment.Exit()
+
+(cherry picked from commit 8a84f98a064081b1987ab7a13dde4bb7c1ff33f9)
+---
+ src/mono/cmake/configure.cmake | 1 +
+ src/mono/mono/metadata/icall.c | 9 +++++++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/src/mono/cmake/configure.cmake b/src/mono/cmake/configure.cmake
+index 085f1818d..eb06433d9 100644
+--- a/src/mono/cmake/configure.cmake
++++ b/src/mono/cmake/configure.cmake
+@@ -286,4 +286,5 @@ elseif(HOST_LIBNX)
+   set(HAVE_PTHREAD_KILL 0)
+   set(HAVE_GNU_STRERROR_R 0)
+   set(HAVE_SIGACTION 0)
++  set(HAVE_GETADDRINFO 1)
+ endif()
+diff --git a/src/mono/mono/metadata/icall.c b/src/mono/mono/metadata/icall.c
+index 182ede96e..2c4490c75 100644
+--- a/src/mono/mono/metadata/icall.c
++++ b/src/mono/mono/metadata/icall.c
+@@ -6201,6 +6201,10 @@ ves_icall_System_Environment_GetCommandLineArgs (MonoError *error)
+ 	return result;
+ }
+ 
++#if defined(HOST_LIBNX)
++extern void mono_nx_exit (int result);
++#endif
++
+ void
+ ves_icall_System_Environment_Exit (int result)
+ {
+@@ -6210,6 +6214,11 @@ ves_icall_System_Environment_Exit (int result)
+ 		mono_thread_exit ();
+ 
+ 	mono_runtime_quit_internal ();
++	
++#if defined(HOST_LIBNX)
++	// We want to handle proper application shutdown
++	mono_nx_exit (result);
++#endif
+ 
+ 	/* we may need to do some cleanup here... */
+ 	exit (result);

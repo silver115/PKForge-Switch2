@@ -1,0 +1,4553 @@
+From 55494f77eab4bd7ff817d6db2c23afff55bcacd5 Mon Sep 17 00:00:00 2001
+From: exelix <13405476+exelix11@users.noreply.github.com>
+Date: Tue, 20 May 2025 20:40:01 +0000
+Subject: [PATCH 01/28] switch/libnx port
+
+(cherry picked from commit d5abea1b34995d9aeff3145ce04bb91d15d20d5b)
+---
+ eng/RuntimeIdentifier.props                   |   3 +-
+ eng/build.sh                                  |   4 +-
+ eng/common/cross/toolchain.cmake              |  42 +-
+ eng/common/native/init-distro-rid.sh          |   3 +
+ eng/native/configurecompiler.cmake            |   2 +
+ eng/native/configureplatform.cmake            |  18 +
+ eng/versioning.targets                        |   1 +
+ .../Common/src/System/IO/PathInternal.Unix.cs |  22 +
+ .../src/PortableRuntimeIdentifierGraph.json   |  11 +
+ .../src/runtime.json                          |  11 +
+ .../System.Console/src/System.Console.csproj  |   5 +-
+ .../System/ConsolePal.Unix.ConsoleStream.cs   |   2 +-
+ .../Diagnostics/Metrics/RuntimeMetrics.cs     |   2 +-
+ .../src/System.IO.Compression.csproj          |   8 +-
+ .../src/System.Net.Http.csproj                |   2 +-
+ .../src/System.Net.NameResolution.csproj      |   4 +-
+ .../src/System.Net.Primitives.csproj          |   6 +-
+ .../src/System.Net.Security.csproj            |   4 +-
+ .../src/System.Net.Sockets.csproj             |  12 +-
+ .../Net/Sockets/SocketAsyncContext.Unix.cs    |   8 +
+ .../Net/Sockets/SocketAsyncEngine.Libnx.cs    | 455 ++++++++++++++++++
+ .../System.Private.CoreLib.Shared.projitems   |   8 +-
+ .../src/System/Environment.Libnx.cs           |  12 +
+ .../src/System/IO/Path.Unix.cs                |  14 +-
+ .../src/System/OperatingSystem.cs             |   2 +
+ src/mono/CMakeLists.txt                       |  33 +-
+ .../System.Private.CoreLib.csproj             |   3 +
+ src/mono/cmake/configure.cmake                |   4 +
+ src/mono/mono.proj                            |  24 +
+ src/mono/mono/eglib/gmodule-unix.c            |   2 +-
+ src/mono/mono/eglib/gstr.c                    |   2 +-
+ src/mono/mono/metadata/threads.c              |   2 +
+ src/mono/mono/mini/CMakeLists.txt             |   4 +-
+ src/mono/mono/mini/exceptions-arm64.c         |  35 +-
+ src/mono/mono/mini/mini-arm64.c               |  45 +-
+ src/mono/mono/mini/mini-arm64.h               |   4 +
+ src/mono/mono/mini/mini-posix.c               |   2 +-
+ src/mono/mono/mini/mini-runtime.c             |  12 +-
+ src/mono/mono/mini/mini-runtime.h             |  24 +-
+ src/mono/mono/mini/mini.c                     |   4 +-
+ src/mono/mono/mini/mini.h                     |   2 +
+ src/mono/mono/mini/tramp-arm64-gsharedvt.c    |  19 +-
+ src/mono/mono/mini/tramp-arm64.c              | 106 ++--
+ src/mono/mono/offsets/offsets-tool.py         |  10 +
+ src/mono/mono/profiler/helper.c               |   3 +
+ src/mono/mono/sgen/sgen-los.c                 |   4 +
+ src/mono/mono/utils/CMakeLists.txt            |   5 +
+ src/mono/mono/utils/dlmalloc.c                |   4 +
+ src/mono/mono/utils/mono-codeman-libnx.c      | 167 +++++++
+ src/mono/mono/utils/mono-codeman-libnx.h      |  29 ++
+ src/mono/mono/utils/mono-codeman.c            | 310 ++++++++++--
+ src/mono/mono/utils/mono-codeman.h            |  12 +
+ src/mono/mono/utils/mono-context.c            |   4 +-
+ src/mono/mono/utils/mono-dl-wasm.c            |   8 +-
+ src/mono/mono/utils/mono-log-libnx.c          | 129 +++++
+ src/mono/mono/utils/mono-mmap-libnx.c         |  88 ++++
+ src/mono/mono/utils/mono-mmap.c               |   7 +-
+ src/mono/mono/utils/mono-proclib.c            |   5 +
+ src/mono/mono/utils/mono-sigcontext.h         |   2 +-
+ src/mono/mono/utils/mono-threads-libnx.c      |  63 +++
+ .../mono/utils/mono-threads-posix-signals.c   |   2 +-
+ src/mono/mono/utils/mono-threads-posix.c      |  17 +-
+ src/mono/mono/utils/mono-threads.h            |  16 +-
+ src/mono/monoaotcross.proj                    |   2 +
+ .../corehost/apphost/static/CMakeLists.txt    |   4 +-
+ src/native/eventpipe/ds-ipc-pal-socket.c      |   4 +
+ src/native/libs/CMakeLists.txt                |  10 +-
+ src/native/libs/Common/pal_utilities.h        |   2 +-
+ .../CMakeLists.txt                            |   9 +-
+ .../pal_icushim_static.c                      |   2 +-
+ src/native/libs/System.Native/CMakeLists.txt  |  33 +-
+ src/native/libs/System.Native/pal_console.c   |   2 +
+ .../System.Native/pal_interfaceaddresses.c    |   5 +-
+ src/native/libs/System.Native/pal_io.c        |  69 ++-
+ .../libs/System.Native/pal_maphardwaretype.c  |   8 +-
+ src/native/libs/System.Native/pal_memory.c    |   2 +-
+ .../libs/System.Native/pal_networking.c       |  59 ++-
+ .../libs/System.Native/pal_process_libnx.c    | 132 +++++
+ .../System.Native/pal_runtimeinformation.c    |  30 ++
+ src/native/libs/System.Native/pal_threading.c |   5 +
+ src/native/libs/System.Native/pal_time.c      |  14 +-
+ src/native/libs/configure.cmake               |  10 +-
+ src/native/minipal/random.c                   |  13 +
+ src/native/minipal/thread.h                   |   2 +
+ .../JIT/Directed/StructABI/StructABI.csproj   |   2 +-
+ 85 files changed, 2062 insertions(+), 230 deletions(-)
+ create mode 100644 src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs
+ create mode 100644 src/libraries/System.Private.CoreLib/src/System/Environment.Libnx.cs
+ create mode 100644 src/mono/mono/utils/mono-codeman-libnx.c
+ create mode 100644 src/mono/mono/utils/mono-codeman-libnx.h
+ create mode 100644 src/mono/mono/utils/mono-log-libnx.c
+ create mode 100644 src/mono/mono/utils/mono-mmap-libnx.c
+ create mode 100644 src/mono/mono/utils/mono-threads-libnx.c
+ create mode 100644 src/native/libs/System.Native/pal_process_libnx.c
+
+diff --git a/eng/RuntimeIdentifier.props b/eng/RuntimeIdentifier.props
+index b8b56d2da..29ce5e36b 100644
+--- a/eng/RuntimeIdentifier.props
++++ b/eng/RuntimeIdentifier.props
+@@ -50,6 +50,7 @@
+     <Targetsillumos Condition="'$(TargetOS)' == 'illumos'">true</Targetsillumos>
+     <TargetsSolaris Condition="'$(TargetOS)' == 'solaris'">true</TargetsSolaris>
+     <TargetsHaiku Condition="'$(TargetOS)' == 'haiku'">true</TargetsHaiku>
++    <TargetsLibnx Condition="'$(TargetOS)' == 'libnx'">true</TargetsLibnx>
+     <TargetsLinux Condition="'$(TargetOS)' == 'linux' or '$(TargetOS)' == 'android'">true</TargetsLinux>
+     <TargetsLinuxBionic Condition="'$(PortableOS)' == 'linux-bionic'">true</TargetsLinuxBionic>
+     <TargetsLinuxMusl Condition="'$(PortableOS)' == 'linux-musl'">true</TargetsLinuxMusl>
+@@ -65,7 +66,7 @@
+     <TargetsBrowser Condition="'$(TargetOS)' == 'browser'">true</TargetsBrowser>
+     <TargetsWasi Condition="'$(TargetOS)' == 'wasi'">true</TargetsWasi>
+     <TargetsWindows Condition="'$(TargetOS)' == 'windows'">true</TargetsWindows>
+-    <TargetsUnix Condition="'$(TargetsFreeBSD)' == 'true' or '$(Targetsillumos)' == 'true' or '$(TargetsSolaris)' == 'true' or '$(TargetsHaiku)' == 'true' or '$(TargetsLinux)' == 'true' or '$(TargetsNetBSD)' == 'true' or '$(TargetsOSX)' == 'true' or '$(TargetsMacCatalyst)' == 'true' or '$(TargetstvOS)' == 'true' or '$(TargetsiOS)' == 'true' or '$(TargetsAndroid)' == 'true'">true</TargetsUnix>
++    <TargetsUnix Condition="'$(TargetsFreeBSD)' == 'true' or '$(Targetsillumos)' == 'true' or '$(TargetsSolaris)' == 'true' or '$(TargetsHaiku)' == 'true' or '$(TargetsLibnx)' == 'true' or '$(TargetsLinux)' == 'true' or '$(TargetsNetBSD)' == 'true' or '$(TargetsOSX)' == 'true' or '$(TargetsMacCatalyst)' == 'true' or '$(TargetstvOS)' == 'true' or '$(TargetsiOS)' == 'true' or '$(TargetsAndroid)' == 'true'">true</TargetsUnix>
+   </PropertyGroup>
+   <PropertyGroup>
+     <_ImportedRuntimeIdentifierProps>true</_ImportedRuntimeIdentifierProps>
+diff --git a/eng/build.sh b/eng/build.sh
+index 2fb64c61f..f3c7425ec 100755
+--- a/eng/build.sh
++++ b/eng/build.sh
+@@ -32,7 +32,7 @@ usage()
+   echo "                                  [Default: Debug]"
+   echo "  --os                            Target operating system: windows, linux, freebsd, osx, maccatalyst, tvos,"
+   echo "                                  tvossimulator, ios, iossimulator, android, browser, wasi, netbsd, illumos, solaris"
+-  echo "                                  linux-musl, linux-bionic, tizen, or haiku."
++  echo "                                  linux-musl, linux-bionic, tizen, libnx or haiku."
+   echo "                                  [Default: Your machine's OS.]"
+   echo "  --targetrid <rid>               Optional argument that overrides the target rid name."
+   echo "  --projects <value>              Project or solution file(s) to build."
+@@ -302,6 +302,8 @@ while [[ $# > 0 ]]; do
+           ;;
+         haiku)
+           os="haiku" ;;
++        libnx)
++          os="libnx" ;;
+         *)
+           echo "Unsupported target OS '$2'."
+           echo "Try 'build.sh --help' for values supported by '--os'."
+diff --git a/eng/common/cross/toolchain.cmake b/eng/common/cross/toolchain.cmake
+index f65c689f6..b2857ce7d 100644
+--- a/eng/common/cross/toolchain.cmake
++++ b/eng/common/cross/toolchain.cmake
+@@ -8,6 +8,7 @@ unset(ILLUMOS)
+ unset(ANDROID)
+ unset(TIZEN)
+ unset(HAIKU)
++unset(LIBNX)
+ 
+ set(TARGET_ARCH_NAME $ENV{TARGET_BUILD_ARCH})
+ 
+@@ -25,6 +26,11 @@ elseif(EXISTS ${CROSS_ROOTFS}/usr/platform/i86pc)
+ elseif(EXISTS ${CROSS_ROOTFS}/boot/system/develop/headers/config/HaikuConfig.h)
+   set(CMAKE_SYSTEM_NAME Haiku)
+   set(HAIKU 1)
++elseif(EXISTS ${CROSS_ROOTFS}/libnx/include/switch.h AND TARGET_ARCH_NAME STREQUAL "arm64")
++  set(CMAKE_SYSTEM_NAME Libnx)
++  set(LIBNX 1)
++  set(DEVKITA64 "${CROSS_ROOTFS}/devkitA64")
++  set(PORTLIBS "${CROSS_ROOTFS}/portlibs/switch")
+ else()
+   set(CMAKE_SYSTEM_NAME Linux)
+   set(LINUX 1)
+@@ -53,6 +59,8 @@ elseif(TARGET_ARCH_NAME STREQUAL "arm64")
+   set(CMAKE_SYSTEM_PROCESSOR aarch64)
+   if(EXISTS ${CROSS_ROOTFS}/usr/lib/gcc/aarch64-alpine-linux-musl)
+     set(TOOLCHAIN "aarch64-alpine-linux-musl")
++  elseif(LIBNX)
++    set(TOOLCHAIN "aarch64-none-elf")
+   elseif(LINUX)
+     set(TOOLCHAIN "aarch64-linux-gnu")
+     if(TIZEN)
+@@ -238,6 +246,38 @@ elseif(HAIKU)
+ 
+     # let CMake set up the correct search paths
+     include(Platform/Haiku)
++elseif(LIBNX)
++    set(CMAKE_INCLUDE_PATH "")
++    include_directories(SYSTEM ${DEVKITA64}/aarch64-none-elf/include)
++    include_directories(SYSTEM ${CROSS_ROOTFS}/libnx/include)
++    include_directories(SYSTEM ${CROSS_ROOTFS}/portlibs/switch/include/)
++
++    # https://github.com/vbe0201/switch-cmake/blob/rewrite/DevkitA64Libnx.cmake
++    list(APPEND CMAKE_PROGRAM_PATH "${CROSS_ROOTFS}/tools/bin")
++    list(APPEND CMAKE_PROGRAM_PATH "${DEVKITA64}/bin")
++
++    set(CMAKE_FIND_ROOT_PATH ${DEVKITPRO} ${CROSS_ROOTFS} ${PORTLIBS})
++    set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS FALSE)
++    add_definitions(-DSWITCH -D__SWITCH__)
++    add_compile_options(-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE)
++    add_compile_options(-g -Wall -O2 -ffunction-sections)
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -fno-exceptions")
++    # set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -g ${ARCH}" CACHE STRING "ASM flags")
++
++    set(CMAKE_SYSTEM_PREFIX_PATH "${CROSS_ROOTFS}/devkitA64/")
++
++    set(CMAKE_C_COMPILER "${DEVKITA64}/bin/aarch64-none-elf-gcc")
++    set(CMAKE_CXX_COMPILER "${DEVKITA64}/bin/aarch64-none-elf-g++")
++    set(CMAKE_AR "${DEVKITA64}/bin/aarch64-none-elf-gcc-ar")
++
++    message(STATUS "CMAKE_C_COMPILER: ${CMAKE_C_COMPILER}")
++    message(STATUS "CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
++
++    # These flags are purposefully empty to use the default flags when invoking the
++    # devkitA64 linker. Otherwise the linker may complain about duplicate flags.
++    set(CMAKE_EXE_LINKER_FLAGS "" CACHE STRING "Executable linker flags")
++    set(CMAKE_STATIC_LINKER_FLAGS "" CACHE STRING "Library linker flags")
++    set(CMAKE_MODULE_LINKER_FLAGS "" CACHE STRING "Module linker flags")
+ else()
+     set(CMAKE_SYSROOT "${CROSS_ROOTFS}")
+ 
+@@ -305,7 +345,7 @@ endif()
+ 
+ # Specify compile options
+ 
+-if((TARGET_ARCH_NAME MATCHES "^(arm|arm64|armel|armv6|loongarch64|ppc64le|riscv64|s390x|x64|x86)$" AND NOT ANDROID AND NOT FREEBSD AND NOT OPENBSD) OR ILLUMOS OR HAIKU)
++if((TARGET_ARCH_NAME MATCHES "^(arm|arm64|armel|armv6|loongarch64|ppc64le|riscv64|s390x|x64|x86)$" AND NOT ANDROID AND NOT FREEBSD AND NOT OPENBSD) OR ILLUMOS OR HAIKU OR LIBNX)
+   set(CMAKE_C_COMPILER_TARGET ${TOOLCHAIN})
+   set(CMAKE_CXX_COMPILER_TARGET ${TOOLCHAIN})
+   set(CMAKE_ASM_COMPILER_TARGET ${TOOLCHAIN})
+diff --git a/eng/common/native/init-distro-rid.sh b/eng/common/native/init-distro-rid.sh
+index 8fc6d2fec..dd9ef1556 100644
+--- a/eng/common/native/init-distro-rid.sh
++++ b/eng/common/native/init-distro-rid.sh
+@@ -54,6 +54,9 @@ getNonPortableDistroRid()
+     elif [ "$targetOs" = "haiku" ]; then
+         __uname_release="$(uname -r)"
+         nonPortableRid=haiku.r"$__uname_release"-"$targetArch"
++    elif [ "$targetOs" = "libnx" ]; then
++        __uname_release="dkp"
++        nonPortableRid=libnx."$__uname_release"-"$targetArch"
+     fi
+ 
+     echo "$nonPortableRid" | tr '[:upper:]' '[:lower:]'
+diff --git a/eng/native/configurecompiler.cmake b/eng/native/configurecompiler.cmake
+index ede3d895f..70aa78197 100644
+--- a/eng/native/configurecompiler.cmake
++++ b/eng/native/configurecompiler.cmake
+@@ -776,6 +776,8 @@ if(CLR_CMAKE_TARGET_UNIX)
+     endif()
+   elseif(CLR_CMAKE_TARGET_HAIKU)
+     add_compile_definitions($<$<NOT:$<BOOL:$<TARGET_PROPERTY:IGNORE_DEFAULT_TARGET_OS>>>:TARGET_HAIKU>)
++  elseif(CLR_CMAKE_TARGET_LIBNX)
++    add_compile_definitions($<$<NOT:$<BOOL:$<TARGET_PROPERTY:IGNORE_DEFAULT_TARGET_OS>>>:TARGET_LIBNX>)  
+   endif()
+   if(CLR_CMAKE_TARGET_BROWSER)
+     add_compile_definitions($<$<NOT:$<BOOL:$<TARGET_PROPERTY:IGNORE_DEFAULT_TARGET_OS>>>:TARGET_BROWSER>)
+diff --git a/eng/native/configureplatform.cmake b/eng/native/configureplatform.cmake
+index 0154f877e..426037560 100644
+--- a/eng/native/configureplatform.cmake
++++ b/eng/native/configureplatform.cmake
+@@ -219,6 +219,19 @@ if(CLR_CMAKE_HOST_OS STREQUAL haiku)
+     set(CLR_CMAKE_HOST_HAIKU 1)
+ endif(CLR_CMAKE_HOST_OS STREQUAL haiku)
+ 
++if(CLR_CMAKE_HOST_OS STREQUAL libnx)
++    set(CLR_CMAKE_HOST_UNIX 1)
++    set(CLR_CMAKE_HOST_LINUX 1)
++    set(CLR_CMAKE_HOST_LIBNX 1)
++    if (CMAKE_SYSTEM_PROCESSOR STREQUAL amd64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64)
++        set(CLR_CMAKE_HOST_UNIX_AMD64 1)
++    elseif (CMAKE_SYSTEM_PROCESSOR STREQUAL aarch64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL arm64)
++        set(CLR_CMAKE_HOST_UNIX_ARM64 1)
++    else()
++        clr_unknown_arch()
++    endif()
++endif(CLR_CMAKE_HOST_OS STREQUAL libnx)
++
+ if(CLR_CMAKE_HOST_OS STREQUAL windows)
+     set(CLR_CMAKE_HOST_WIN32 1)
+ endif(CLR_CMAKE_HOST_OS STREQUAL windows)
+@@ -434,6 +447,11 @@ if(CLR_CMAKE_TARGET_OS STREQUAL haiku)
+     set(CLR_CMAKE_TARGET_HAIKU 1)
+ endif(CLR_CMAKE_TARGET_OS STREQUAL haiku)
+ 
++if(CLR_CMAKE_TARGET_OS STREQUAL libnx)
++    set(CLR_CMAKE_TARGET_UNIX 1)
++    set(CLR_CMAKE_TARGET_LIBNX 1)
++endif(CLR_CMAKE_TARGET_OS STREQUAL libnx)
++
+ if(CLR_CMAKE_TARGET_OS STREQUAL emscripten OR CLR_CMAKE_TARGET_OS STREQUAL browser)
+     set(CLR_CMAKE_TARGET_UNIX 1)
+     set(CLR_CMAKE_TARGET_BROWSER 1)
+diff --git a/eng/versioning.targets b/eng/versioning.targets
+index 46bf2743b..3b4f9ad9d 100644
+--- a/eng/versioning.targets
++++ b/eng/versioning.targets
+@@ -69,6 +69,7 @@
+     <SupportedPlatform Include="iOS" />
+     <SupportedPlatform Include="tvOS" />
+     <SupportedPlatform Include="macCatalyst" />
++    <SupportedPlatform Include="libnx" />
+   </ItemGroup>
+ 
+   <!-- Enables browser warnings for cross platform or Browser targeted builds -->
+diff --git a/src/libraries/Common/src/System/IO/PathInternal.Unix.cs b/src/libraries/Common/src/System/IO/PathInternal.Unix.cs
+index 58b004fd3..b7e2c1312 100644
+--- a/src/libraries/Common/src/System/IO/PathInternal.Unix.cs
++++ b/src/libraries/Common/src/System/IO/PathInternal.Unix.cs
+@@ -19,9 +19,31 @@ internal static partial class PathInternal
+         internal const string DirectorySeparators = DirectorySeparatorCharAsString;
+         internal static ReadOnlySpan<byte> Utf8DirectorySeparators => "/"u8;
+ 
++#if TARGET_LIBNX
++        internal static readonly string[] LibnxPathRoots = new string[]
++        {
++            "sdmc:/",
++            "romfs:/",
++            "/"
++        };
++
++        internal static string GetLibnxRoot(ReadOnlySpan<char> path)
++        {
++             foreach (string root in LibnxPathRoots)
++                if (path.StartsWith(root.AsSpan()))
++                    return root;
++
++            return string.Empty;
++        }
++#endif
++
+         internal static int GetRootLength(ReadOnlySpan<char> path)
+         {
++#if TARGET_LIBNX
++            return GetLibnxRoot(path).Length;
++#else
+             return path.Length > 0 && IsDirectorySeparator(path[0]) ? 1 : 0;
++#endif
+         }
+ 
+         internal static bool IsDirectorySeparator(char c)
+diff --git a/src/libraries/Microsoft.NETCore.Platforms/src/PortableRuntimeIdentifierGraph.json b/src/libraries/Microsoft.NETCore.Platforms/src/PortableRuntimeIdentifierGraph.json
+index 9e104d05e..3db3ceec9 100644
+--- a/src/libraries/Microsoft.NETCore.Platforms/src/PortableRuntimeIdentifierGraph.json
++++ b/src/libraries/Microsoft.NETCore.Platforms/src/PortableRuntimeIdentifierGraph.json
+@@ -75,6 +75,17 @@
+           "unix-x64"
+         ]
+       },
++      "libnx": {
++        "#import": [
++          "unix"
++        ]
++      },
++      "libnx-arm64": {
++        "#import": [
++          "libnx",
++          "unix-arm64"
++        ]
++      },
+       "illumos": {
+         "#import": [
+           "unix"
+diff --git a/src/libraries/Microsoft.NETCore.Platforms/src/runtime.json b/src/libraries/Microsoft.NETCore.Platforms/src/runtime.json
+index 64e7c5546..5463ca312 100644
+--- a/src/libraries/Microsoft.NETCore.Platforms/src/runtime.json
++++ b/src/libraries/Microsoft.NETCore.Platforms/src/runtime.json
+@@ -1739,6 +1739,17 @@
+         "unix-x64"
+       ]
+     },
++    "libnx": {
++      "#import": [
++        "unix"
++      ]
++    },
++    "libnx-arm64": {
++      "#import": [
++        "libnx",
++        "unix-arm64"
++      ]
++    },
+     "illumos": {
+       "#import": [
+         "unix"
+diff --git a/src/libraries/System.Console/src/System.Console.csproj b/src/libraries/System.Console/src/System.Console.csproj
+index 0b24fa4c0..3a5f60809 100644
+--- a/src/libraries/System.Console/src/System.Console.csproj
++++ b/src/libraries/System.Console/src/System.Console.csproj
+@@ -1,7 +1,7 @@
+ <Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+-    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-android;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent)</TargetFrameworks>
++    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-android;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent)-libnx;$(NetCoreAppCurrent)</TargetFrameworks>
+     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+     <UseCompilerGeneratedDocXmlFile>false</UseCompilerGeneratedDocXmlFile>
+   </PropertyGroup>
+@@ -12,6 +12,7 @@
+     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(TargetPlatformIdentifier)' == ''">SR.PlatformNotSupported_SystemConsole</GeneratePlatformNotSupportedAssemblyMessage>
+     <DefineConstants Condition="'$(TargetPlatformIdentifier)' == 'Browser'">$(DefineConstants);TARGET_BROWSER</DefineConstants>
+     <DefineConstants Condition="'$(TargetPlatformIdentifier)' == 'wasi'">$(DefineConstants);TARGET_WASI</DefineConstants>
++    <DefineConstants Condition="'$(TargetPlatformIdentifier)' == 'libnx'">$(DefineConstants);TARGET_LIBNX</DefineConstants>
+   </PropertyGroup>
+ 
+   <ItemGroup Condition="'$(TargetPlatformIdentifier)' != ''">
+@@ -74,7 +75,7 @@
+   </ItemGroup>
+ 
+   <!-- WASI is like unix without dup and termio -->
+-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'wasi'">
++  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'wasi' or '$(TargetPlatformIdentifier)' == 'libnx'">
+     <Compile Include="System\ConsolePal.Wasi.cs" />
+     <Compile Include="System\ConsolePal.Unix.ConsoleStream.cs" />
+     <!-- 
+diff --git a/src/libraries/System.Console/src/System/ConsolePal.Unix.ConsoleStream.cs b/src/libraries/System.Console/src/System/ConsolePal.Unix.ConsoleStream.cs
+index cd0adce86..e259bb06e 100644
+--- a/src/libraries/System.Console/src/System/ConsolePal.Unix.ConsoleStream.cs
++++ b/src/libraries/System.Console/src/System/ConsolePal.Unix.ConsoleStream.cs
+@@ -40,7 +40,7 @@ protected override void Dispose(bool disposing)
+             }
+ 
+             public override int Read(Span<byte> buffer) =>
+-#if !TARGET_WASI
++#if !TARGET_WASI && !TARGET_LIBNX
+                 _useReadLine ?
+                     ConsolePal.StdInReader.ReadLine(buffer) :
+ #endif
+diff --git a/src/libraries/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/Metrics/RuntimeMetrics.cs b/src/libraries/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/Metrics/RuntimeMetrics.cs
+index a9bd6b286..b2f30d986 100644
+--- a/src/libraries/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/Metrics/RuntimeMetrics.cs
++++ b/src/libraries/System.Diagnostics.DiagnosticSource/src/System/Diagnostics/Metrics/RuntimeMetrics.cs
+@@ -146,7 +146,7 @@ static RuntimeMetrics()
+                 unit: "{cpu}",
+                 description: "The number of processors available to the process.");
+ 
+-            if (!OperatingSystem.IsBrowser() && !OperatingSystem.IsWasi() && !OperatingSystem.IsTvOS() && !(OperatingSystem.IsIOS() && !OperatingSystem.IsMacCatalyst()))
++            if (!OperatingSystem.IsOSPlatform("libnx") && !OperatingSystem.IsBrowser() && !OperatingSystem.IsWasi() && !OperatingSystem.IsTvOS() && !(OperatingSystem.IsIOS() && !OperatingSystem.IsMacCatalyst()))
+             {
+                 s_meter.CreateObservableCounter(
+                     "dotnet.process.cpu.time",
+diff --git a/src/libraries/System.IO.Compression/src/System.IO.Compression.csproj b/src/libraries/System.IO.Compression/src/System.IO.Compression.csproj
+index 7510c1c10..0a74f4ae2 100644
+--- a/src/libraries/System.IO.Compression/src/System.IO.Compression.csproj
++++ b/src/libraries/System.IO.Compression/src/System.IO.Compression.csproj
+@@ -1,7 +1,7 @@
+ <Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+-    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent)</TargetFrameworks>
++    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent)-libnx;$(NetCoreAppCurrent)</TargetFrameworks>
+     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+     <UseCompilerGeneratedDocXmlFile>false</UseCompilerGeneratedDocXmlFile>
+     <GenAPIExcludeApiList>ReferenceAssemblyExclusions.txt</GenAPIExcludeApiList>
+@@ -11,8 +11,8 @@
+   <PropertyGroup>
+     <TargetPlatformIdentifier>$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))</TargetPlatformIdentifier>
+     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(TargetPlatformIdentifier)' == ''">SR.PlatformNotSupported_Compression</GeneratePlatformNotSupportedAssemblyMessage>
+-  </PropertyGroup>
+-
++   </PropertyGroup>
++   
+   <ItemGroup Condition="'$(TargetPlatformIdentifier)' != ''">
+     <Compile Include="$(CommonPath)Interop\Interop.zlib.cs" />
+     <Compile Include="$(SharedOpenSourcePath)System\IO\Compression\ZipArchive.cs" />
+@@ -67,7 +67,7 @@
+   </ItemGroup>
+ 
+   <!-- Unix specific files -->
+-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'unix' or '$(TargetPlatformIdentifier)' == 'browser' or '$(TargetPlatformIdentifier)' == 'wasi'">
++  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'unix' or '$(TargetPlatformIdentifier)' == 'browser' or '$(TargetPlatformIdentifier)' == 'wasi' or '$(TargetPlatformIdentifier)' == 'libnx'">
+     <Compile Include="System\IO\Compression\ZipArchiveEntry.Unix.cs" />
+     <Compile Include="$(CommonPath)System\IO\Compression\ZipArchiveEntryConstants.Unix.cs" />
+     <Compile Include="$(CommonPath)Interop\Unix\Interop.Libraries.cs"
+diff --git a/src/libraries/System.Net.Http/src/System.Net.Http.csproj b/src/libraries/System.Net.Http/src/System.Net.Http.csproj
+index 63d88d70d..1200fc24f 100644
+--- a/src/libraries/System.Net.Http/src/System.Net.Http.csproj
++++ b/src/libraries/System.Net.Http/src/System.Net.Http.csproj
+@@ -1,7 +1,7 @@
+ ﻿<Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+-    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-linux;$(NetCoreAppCurrent)-osx;$(NetCoreAppCurrent)-freebsd;$(NetCoreAppCurrent)-maccatalyst;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent)-illumos;$(NetCoreAppCurrent)-solaris;$(NetCoreAppCurrent)-haiku;$(NetCoreAppCurrent)-android;$(NetCoreAppCurrent)</TargetFrameworks>
++    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-linux;$(NetCoreAppCurrent)-osx;$(NetCoreAppCurrent)-freebsd;$(NetCoreAppCurrent)-maccatalyst;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent)-illumos;$(NetCoreAppCurrent)-solaris;$(NetCoreAppCurrent)-haiku;$(NetCoreAppCurrent)-android;$(NetCoreAppCurrent)-libnx;$(NetCoreAppCurrent)</TargetFrameworks>
+     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+     <DefineConstants>$(DefineConstants);HTTP_DLL</DefineConstants>
+     <UseCompilerGeneratedDocXmlFile>false</UseCompilerGeneratedDocXmlFile>
+diff --git a/src/libraries/System.Net.NameResolution/src/System.Net.NameResolution.csproj b/src/libraries/System.Net.NameResolution/src/System.Net.NameResolution.csproj
+index 090f939b3..19faeabfa 100644
+--- a/src/libraries/System.Net.NameResolution/src/System.Net.NameResolution.csproj
++++ b/src/libraries/System.Net.NameResolution/src/System.Net.NameResolution.csproj
+@@ -1,7 +1,7 @@
+ <Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+-    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent)</TargetFrameworks>
++    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)-libnx;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent)</TargetFrameworks>
+     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+     <UseCompilerGeneratedDocXmlFile>false</UseCompilerGeneratedDocXmlFile>
+   </PropertyGroup>
+@@ -68,7 +68,7 @@
+              Link="Common\Interop\Windows\WinSock\Interop.GetAddrInfoExW.cs" />
+   </ItemGroup>
+ 
+-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'unix'">
++  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'unix' or '$(TargetPlatformIdentifier)' == 'libnx'">
+     <Compile Include="System\Net\NameResolutionPal.Unix.cs" />
+     <Compile Include="$(CommonPath)System\Net\InteropIPAddressExtensions.Unix.cs"
+              Link="Common\System\Net\InteropIPAddressExtensions.Unix.cs" />
+diff --git a/src/libraries/System.Net.Primitives/src/System.Net.Primitives.csproj b/src/libraries/System.Net.Primitives/src/System.Net.Primitives.csproj
+index ee2be350b..8fc893335 100644
+--- a/src/libraries/System.Net.Primitives/src/System.Net.Primitives.csproj
++++ b/src/libraries/System.Net.Primitives/src/System.Net.Primitives.csproj
+@@ -1,7 +1,7 @@
+ <Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+-    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent)</TargetFrameworks>
++    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-browser;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent)-libnx;$(NetCoreAppCurrent)</TargetFrameworks>
+     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+     <ILLinkKeepDepAttributes>false</ILLinkKeepDepAttributes> <!-- See comments in Cookie.cs -->
+     <!-- SYSTEM_NET_PRIMITIVES_DLL is required to allow source-level code sharing for types defined within the
+@@ -122,7 +122,7 @@
+              Link="Common\Interop\Windows\IpHlpApi\Interop.ConvertInterfaceNameToLuid.cs" />
+   </ItemGroup>
+ 
+-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'unix' or '$(TargetPlatformIdentifier)' == 'browser' or '$(TargetPlatformIdentifier)' == 'wasi'">
++  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'unix' or '$(TargetPlatformIdentifier)' == 'browser' or '$(TargetPlatformIdentifier)' == 'wasi'or '$(TargetPlatformIdentifier)' == 'libnx'">
+     <Compile Include="System\Net\SocketException.Unix.cs" />
+     <Compile Include="$(CommonPath)System\Net\SocketAddressPal.Unix.cs"
+              Link="Common\System\Net\SocketAddressPal.Unix.cs" />
+@@ -138,7 +138,7 @@
+              Link="Common\Interop\Unix\System.Native\Interop.SocketAddress.cs" />
+   </ItemGroup>
+ 
+-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'unix'">
++  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'unix' or '$(TargetPlatformIdentifier)' == 'libnx'">
+     <Compile Include="$(CommonPath)System\Net\NetworkInformation\HostInformationPal.Unix.cs"
+              Link="Common\System\Net\NetworkInformation\HostInformationPal.Unix.cs" />
+     <Compile Include="$(CommonPath)System\Net\NetworkInformation\InterfaceInfoPal.Unix.cs"
+diff --git a/src/libraries/System.Net.Security/src/System.Net.Security.csproj b/src/libraries/System.Net.Security/src/System.Net.Security.csproj
+index fe26b4a0a..b1868e6f7 100644
+--- a/src/libraries/System.Net.Security/src/System.Net.Security.csproj
++++ b/src/libraries/System.Net.Security/src/System.Net.Security.csproj
+@@ -1,7 +1,7 @@
+ <Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+-    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-linux;$(NetCoreAppCurrent)-freebsd;$(NetCoreAppCurrent)-haiku;$(NetCoreAppCurrent)-android;$(NetCoreAppCurrent)-osx;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)</TargetFrameworks>
++    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-linux;$(NetCoreAppCurrent)-freebsd;$(NetCoreAppCurrent)-haiku;$(NetCoreAppCurrent)-android;$(NetCoreAppCurrent)-osx;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)-libnx;$(NetCoreAppCurrent)</TargetFrameworks>
+     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+     <!-- This is needed so that code for TlsCipherSuite will have no namespace (causes compile errors) when used within T4 template  -->
+     <DefineConstants>$(DefineConstants);PRODUCT</DefineConstants>
+@@ -19,7 +19,7 @@
+     <UseAndroidCrypto Condition="'$(TargetPlatformIdentifier)' == 'android'">true</UseAndroidCrypto>
+     <UseAppleCrypto Condition="'$(TargetPlatformIdentifier)' == 'osx' or '$(TargetPlatformIdentifier)' == 'ios' or '$(TargetPlatformIdentifier)' == 'tvos'">true</UseAppleCrypto>
+     <UseManagedNtlm Condition="'$(TargetPlatformIdentifier)' == 'android' or '$(TargetPlatformIdentifier)' == 'tvos'">true</UseManagedNtlm>
+-    <DefineConstants Condition="'$(UseAndroidCrypto)' == 'true' or '$(UseAppleCrypto)' == 'true'">$(DefineConstants);SYSNETSECURITY_NO_OPENSSL</DefineConstants>
++    <DefineConstants Condition="'$(UseAndroidCrypto)' == 'true' or '$(UseAppleCrypto)' == 'true' or '$(TargetPlatformIdentifier)' == 'libnx'">$(DefineConstants);SYSNETSECURITY_NO_OPENSSL</DefineConstants>
+     <GenAPIExcludeApiList>ReferenceAssemblyExclusions.txt</GenAPIExcludeApiList>
+   </PropertyGroup>
+ 
+diff --git a/src/libraries/System.Net.Sockets/src/System.Net.Sockets.csproj b/src/libraries/System.Net.Sockets/src/System.Net.Sockets.csproj
+index 054cc155b..2c45c8f19 100644
+--- a/src/libraries/System.Net.Sockets/src/System.Net.Sockets.csproj
++++ b/src/libraries/System.Net.Sockets/src/System.Net.Sockets.csproj
+@@ -1,7 +1,7 @@
+ ﻿<Project Sdk="Microsoft.NET.Sdk">
+ 
+   <PropertyGroup>
+-    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-osx;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent)</TargetFrameworks>
++    <TargetFrameworks>$(NetCoreAppCurrent)-windows;$(NetCoreAppCurrent)-unix;$(NetCoreAppCurrent)-osx;$(NetCoreAppCurrent)-ios;$(NetCoreAppCurrent)-tvos;$(NetCoreAppCurrent)-wasi;$(NetCoreAppCurrent);$(NetCoreAppCurrent)-libnx</TargetFrameworks>
+     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+     <!-- SYSTEM_NET_SOCKETS_DLL is required to allow source-level code sharing for types defined within the
+          System.Net.Internals namespace. -->
+@@ -15,6 +15,7 @@
+     <GeneratePlatformNotSupportedAssemblyMessage Condition="'$(TargetPlatformIdentifier)' == ''">SR.SystemNetSockets_PlatformNotSupported</GeneratePlatformNotSupportedAssemblyMessage>
+     <IsApplePlatform Condition="'$(TargetPlatformIdentifier)' == 'osx' or '$(TargetPlatformIdentifier)' == 'ios' or '$(TargetPlatformIdentifier)' == 'tvos'">true</IsApplePlatform>
+     <DefineConstants Condition="'$(IsApplePlatform)' == 'true'">$(DefineConstants);SYSTEM_NET_SOCKETS_APPLE_PLATFROM</DefineConstants>
++    <DefineConstants Condition="'$(TargetPlatformIdentifier)' == 'libnx'">$(DefineConstants);TARGET_LIBNX</DefineConstants>
+   </PropertyGroup>
+ 
+   <ItemGroup Condition="'$(TargetPlatformIdentifier)' != ''">
+@@ -199,7 +200,14 @@
+              Link="Common\Interop\Unix\System.Native\Interop.SocketEvent.cs" />
+   </ItemGroup>
+ 
+-  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'unix' or '$(TargetPlatformIdentifier)' == 'wasi' or '$(TargetPlatformIdentifier)' == 'osx' or '$(TargetPlatformIdentifier)' == 'ios' or '$(TargetPlatformIdentifier)' == 'tvos'">
++  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'libnx'">
++    <Compile Include="System\Net\Sockets\UnixDomainSocketEndPoint.Unix.cs"/>
++    <Compile Include="System\Net\Sockets\SocketAsyncEngine.Libnx.cs" />
++    <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.SocketEvent.cs"
++             Link="Common\Interop\Unix\System.Native\Interop.SocketEvent.cs" />
++  </ItemGroup>
++
++  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'unix' or '$(TargetPlatformIdentifier)' == 'wasi' or '$(TargetPlatformIdentifier)' == 'osx' or '$(TargetPlatformIdentifier)' == 'ios' or '$(TargetPlatformIdentifier)' == 'tvos' or '$(TargetPlatformIdentifier)' == 'libnx'">
+     <Compile Include="System\Net\Sockets\SafeSocketHandle.Unix.cs" />
+     <Compile Include="System\Net\Sockets\SafeSocketHandle.Unix.OptionTracking.cs" />
+     <Compile Include="System\Net\Sockets\Socket.Unix.cs" />
+diff --git a/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncContext.Unix.cs b/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncContext.Unix.cs
+index a5527972a..b4575486a 100644
+--- a/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncContext.Unix.cs
++++ b/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncContext.Unix.cs
+@@ -784,6 +784,10 @@ private enum QueueState : int
+                                             // "losing" the notification and causing the operation to pend indefinitely.
+             private AsyncOperation? _tail;   // Queue of pending IO operations to process when data becomes available.
+ 
++#if TARGET_LIBNX
++            internal bool IsEmpty => _tail == null;
++#endif
++
+             // The _queueLock is used to ensure atomic access to the queue state above.
+             // The lock is only ever held briefly, to read and/or update queue state, and
+             // never around any external call, e.g. OS call or user code invocation.
+@@ -1265,6 +1269,10 @@ public void Trace(SocketAsyncContext context, string message, [CallerMemberName]
+         /// <summary>An index into <see cref="SocketAsyncEngine"/>'s table of all contexts that are currently <see cref="IsRegistered"/>.</summary>
+         internal int GlobalContextIndex = -1;
+ 
++#if TARGET_LIBNX
++        internal bool HasPendingWrites => !_sendQueue.IsEmpty;
++#endif
++
+         private readonly object _registerLock = new object();
+ 
+         public SocketAsyncContext(SafeSocketHandle socket)
+diff --git a/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs b/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs
+new file mode 100644
+index 000000000..d11838381
+--- /dev/null
++++ b/src/libraries/System.Net.Sockets/src/System/Net/Sockets/SocketAsyncEngine.Libnx.cs
+@@ -0,0 +1,455 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.Collections.Concurrent;
++using System.Collections.Generic;
++using System.Diagnostics;
++using System.Runtime.CompilerServices;
++using System.Runtime.InteropServices;
++using System.Threading;
++
++namespace System.Net.Sockets
++{
++    internal sealed unsafe class SocketAsyncEngine : IThreadPoolWorkItem
++    {
++        private const int EventBufferCount =
++#if DEBUG
++            32;
++#else
++            1024;
++#endif
++
++        private static bool Logging;
++        private static void Log(string str)
++        {
++            if (Logging)
++                Console.WriteLine(str);
++        }
++
++        // Socket continuations are dispatched to the ThreadPool from the event thread.
++        // This avoids continuations blocking the event handling.
++        // Setting PreferInlineCompletions allows continuations to run directly on the event thread.
++        // PreferInlineCompletions defaults to false and can be set to true using the DOTNET_SYSTEM_NET_SOCKETS_INLINE_COMPLETIONS envvar.
++        internal static readonly bool InlineSocketCompletionsEnabled = Environment.GetEnvironmentVariable("DOTNET_SYSTEM_NET_SOCKETS_INLINE_COMPLETIONS") == "1";
++
++        private static int GetEngineCount()
++        {
++            // On libnx we only have 3 usable cores, we can limit to a single engine to avoid starting too many threads.
++            return 1;
++        }
++
++        private static readonly SocketAsyncEngine[] s_engines = CreateEngines();
++        private static int s_allocateFromEngine = -1;
++
++        private static SocketAsyncEngine[] CreateEngines()
++        {
++            int engineCount = GetEngineCount();
++
++            var engines = new SocketAsyncEngine[engineCount];
++
++            for (int i = 0; i < engineCount; i++)
++            {
++                engines[i] = new SocketAsyncEngine();
++            }
++
++            return engines;
++        }
++
++        private readonly Interop.Sys.SocketEvent* _buffer;
++        private uint _poolCookie;
++
++        //
++        // Maps handle values to SocketAsyncContext instances.
++        //
++        private readonly ConcurrentDictionary<IntPtr, SocketAsyncContextWrapper> _handleToContextMap = new ConcurrentDictionary<IntPtr, SocketAsyncContextWrapper>();
++
++        private readonly List<IntPtr> _handleList = new List<IntPtr>();
++
++        //
++        // Queue of events generated by EventLoop() that would be processed by the thread pool
++        //
++        private readonly ConcurrentQueue<SocketIOEvent> _eventQueue = new ConcurrentQueue<SocketIOEvent>();
++
++        // The scheme works as follows:
++        // - From NotScheduled, the only transition is to Scheduled when new events are enqueued and a work item is enqueued to process them.
++        // - From Scheduled, the only transition is to Determining right before trying to dequeue an event.
++        // - From Determining, it can go to either NotScheduled when no events are present in the queue (the previous work item processed all of them)
++        //   or Scheduled if the queue is still not empty (let the current work item handle parallelization as convinient).
++        //
++        // The goal is to avoid enqueueing more work items than necessary, while still ensuring that all events are processed.
++        // Another work item isn't enqueued to the thread pool hastily while the state is Determining,
++        // instead the parallelizer takes care of that. We also ensure that only one thread can be parallelizing at any time.
++        private enum EventQueueProcessingStage
++        {
++            NotScheduled,
++            Determining,
++            Scheduled
++        }
++
++        private EventQueueProcessingStage _eventQueueProcessingStage;
++
++        //
++        // Registers the Socket with a SocketAsyncEngine, and returns the associated engine.
++        //
++        public static bool TryRegisterSocket(IntPtr socketHandle, SocketAsyncContext context, out SocketAsyncEngine? engine, out Interop.Error error)
++        {
++            int engineIndex = Math.Abs(Interlocked.Increment(ref s_allocateFromEngine) % s_engines.Length);
++            SocketAsyncEngine nextEngine = s_engines[engineIndex];
++            bool registered = nextEngine.TryRegisterCore(socketHandle, context, out error);
++            engine = registered ? nextEngine : null;
++            return registered;
++        }
++
++        private bool TryRegisterCore(IntPtr socketHandle, SocketAsyncContext context, out Interop.Error error)
++        {
++            bool added = _handleToContextMap.TryAdd(socketHandle, new SocketAsyncContextWrapper(context));
++            if (!added)
++            {
++                // Using public SafeSocketHandle(IntPtr) a user can add the same handle
++                // from a different Socket instance.
++                throw new InvalidOperationException(SR.net_sockets_handle_already_used);
++            }
++
++            lock (_handleList)
++            {
++                _handleList.Add(socketHandle);
++                unchecked
++                {
++                    ++_poolCookie;
++                }
++            }
++
++            Log($"SocketAyncEngine: Adding socket handle {socketHandle}");
++
++            error = Interop.Error.SUCCESS;
++            return true;
++        }
++
++        public void UnregisterSocket(IntPtr socketHandle)
++        {
++            _handleToContextMap.TryRemove(socketHandle, out _);
++
++            Log($"SocketAyncEngine: Removing socket {socketHandle}");
++
++            lock (_handleList)
++            {
++                _handleList.Remove(socketHandle);
++                unchecked
++                {
++                    ++_poolCookie;
++                }
++            }
++        }
++
++        private SocketAsyncEngine()
++        {
++            Log($"SocketAyncEngine: Creating");
++
++            try
++            {
++                fixed (Interop.Sys.SocketEvent** bufferPtr = &_buffer)
++                {
++                    var err = Interop.Sys.CreateSocketEventBuffer(EventBufferCount, bufferPtr);
++                    if (err != Interop.Error.SUCCESS)
++                    {
++                        throw new InternalException(err);
++                    }
++                }
++
++                var thread = new Thread(static s => ((SocketAsyncEngine)s!).EventLoop())
++                {
++                    IsBackground = true,
++                    Name = ".NET Sockets"
++                };
++                thread.UnsafeStart(this);
++            }
++            catch
++            {
++                FreeNativeResources();
++                throw;
++            }
++        }
++
++        private void EventLoop()
++        {
++            try
++            {
++                SocketEventHandler handler = new SocketEventHandler(this);
++                while (true)
++                {
++                    Interop.PollEvent[] events;
++                    uint cookie;
++
++                    lock (_handleList)
++                    {
++                        cookie = _poolCookie;
++                        events = new Interop.PollEvent[_handleList.Count];
++                        for (int i = 0; i < _handleList.Count; i++)
++                        {
++                            var write = true;
++                                                            // We should set POLLOUT only if we want to send data, this is an attempt at getting this info from the context but it's just a guess, might not be correct.
++                            if (_handleToContextMap.TryGetValue(_handleList[i], out var thisCtx))
++                                write = thisCtx.Context.HasPendingWrites;
++
++                            events[i] = new Interop.PollEvent
++                            {
++                                FileDescriptor = (int)_handleList[i],
++                                Events = write ?
++                                    Interop.PollEvents.POLLIN | Interop.PollEvents.POLLOUT | Interop.PollEvents.POLLERR | Interop.PollEvents.POLLHUP :
++                                    Interop.PollEvents.POLLIN | Interop.PollEvents.POLLERR | Interop.PollEvents.POLLHUP
++                            };
++                        }
++                    }
++
++                    if (events.Length == 0)
++                    {
++                        // No sockets to poll, wait for a while before checking again.
++                        Thread.Sleep(50);
++                        continue;
++                    }
++
++                    fixed (Interop.PollEvent* eventsPtr = events)
++                    {
++                        // Poll until we have events to process or the pool cookie changes.
++                        uint triggered = 0;
++                        while (cookie == _poolCookie)
++                        {
++                            Log($"SocketAyncEngine: doing poll with {events.Length} sockets");
++                            triggered = 0;
++                            var error = Interop.Sys.Poll(eventsPtr, (uint)events.Length, 60, &triggered);
++                            if (error != Interop.Error.SUCCESS && error != Interop.Error.EAGAIN)
++                            {
++                                // Probably a socket was closed and we got an error, it should get unregistered in the next iteration.
++                                if (error == Interop.Error.EBADF)
++                                    Log($"SocketAyncEngine: got EBADF, ignoring.");
++                                else
++                                    throw new InternalException(error);
++                            }
++
++                            if (triggered > 0)
++                            {
++                                // We have events to process, break out of the loop.
++                                break;
++                            }
++                        }
++
++                        Log($"SocketAyncEngine: Poll loop done triggered={triggered} cookie={cookie} _poolCookie={_poolCookie}");
++
++                        if (triggered == 0)
++                        {
++                            // No events triggered, the cookie must have changed, continue to the next iteration.
++                            continue;
++                        }
++                    }
++
++                    int populatedEvents = 0;
++                    foreach (var e in events)
++                    {
++                        if ((short)e.TriggeredEvents != 0 && _handleToContextMap.ContainsKey(e.FileDescriptor))
++                        {
++                            Log($"SocketAyncEngine: Socket {e.FileDescriptor} triggered event {e.TriggeredEvents}");
++                            handler.Buffer[populatedEvents].Data = e.FileDescriptor;
++                            if (e.TriggeredEvents.HasFlag(Interop.PollEvents.POLLIN)) handler.Buffer[populatedEvents].Events |= Interop.Sys.SocketEvents.Read;
++                            if (e.TriggeredEvents.HasFlag(Interop.PollEvents.POLLOUT)) handler.Buffer[populatedEvents].Events |= Interop.Sys.SocketEvents.Write;
++                            if (e.TriggeredEvents.HasFlag(Interop.PollEvents.POLLERR)) handler.Buffer[populatedEvents].Events |= Interop.Sys.SocketEvents.Error;
++                            if (e.TriggeredEvents.HasFlag(Interop.PollEvents.POLLHUP)) handler.Buffer[populatedEvents].Events |= Interop.Sys.SocketEvents.Close;
++                            ++populatedEvents;
++
++                            if (populatedEvents == EventBufferCount)
++                                break;
++                        }
++                    }
++
++                    if (populatedEvents == 0)
++                    {
++                        // The original code has an assert here. However it's possible that a poll was triggered for a socket that was removed from the list
++                        // If this happens, we might get 0 events since we ignore such sockets with _handleToContextMap.ContainsKey.
++                        // Ignore this condition and try polling again.
++                        continue;
++                    }
++
++                    // Only enqueue a work item if the stage is NotScheduled.
++                    // Otherwise there must be a work item already queued or another thread already handling parallelization.
++                    if (handler.HandleSocketEvents(populatedEvents) &&
++                        Interlocked.Exchange(
++                            ref _eventQueueProcessingStage,
++                            EventQueueProcessingStage.Scheduled) == EventQueueProcessingStage.NotScheduled)
++                    {
++                        ThreadPool.UnsafeQueueUserWorkItem(this, preferLocal: false);
++                    }
++                }
++            }
++            catch (Exception e)
++            {
++                Environment.FailFast("Exception thrown from SocketAsyncEngine event loop: " + e.ToString(), e);
++            }
++        }
++
++        private void UpdateEventQueueProcessingStage(bool isEventQueueEmpty)
++        {
++            if (!isEventQueueEmpty)
++            {
++                // There are more events to process, set stage to Scheduled and enqueue a work item.
++                _eventQueueProcessingStage = EventQueueProcessingStage.Scheduled;
++            }
++            else
++            {
++                // The stage here would be Scheduled if an enqueuer has enqueued work and changed the stage, or Determining
++                // otherwise. If the stage is Determining, there's no more work to do. If the stage is Scheduled, the enqueuer
++                // would not have scheduled a work item to process the work, so schedule one now.
++                EventQueueProcessingStage stageBeforeUpdate =
++                    Interlocked.CompareExchange(
++                        ref _eventQueueProcessingStage,
++                        EventQueueProcessingStage.NotScheduled,
++                        EventQueueProcessingStage.Determining);
++                Debug.Assert(stageBeforeUpdate != EventQueueProcessingStage.NotScheduled);
++                if (stageBeforeUpdate == EventQueueProcessingStage.Determining)
++                {
++                    return;
++                }
++            }
++
++            ThreadPool.UnsafeQueueUserWorkItem(this, preferLocal: false);
++        }
++
++        void IThreadPoolWorkItem.Execute()
++        {
++            ConcurrentQueue<SocketIOEvent> eventQueue = _eventQueue;
++            SocketIOEvent ev;
++            while (true)
++            {
++                Debug.Assert(_eventQueueProcessingStage == EventQueueProcessingStage.Scheduled);
++
++                // The change needs to be visible to other threads that may request a worker thread before a work item is attempted
++                // to be dequeued by the current thread. In particular, if an enqueuer queues a work item and does not request a
++                // thread because it sees a Determining or Scheduled stage, and the current thread is the last thread processing
++                // work items, the current thread must either see the work item queued by the enqueuer, or it must see a stage of
++                // Scheduled, and try to dequeue again or request another thread.
++                _eventQueueProcessingStage = EventQueueProcessingStage.Determining;
++                Interlocked.MemoryBarrier();
++
++                if (eventQueue.TryDequeue(out ev))
++                {
++                    break;
++                }
++
++                // The stage here would be Scheduled if an enqueuer has enqueued work and changed the stage, or Determining
++                // otherwise. If the stage is Determining, there's no more work to do. If the stage is Scheduled, the enqueuer
++                // would not have scheduled a work item to process the work, so try to dequeue a work item again.
++                EventQueueProcessingStage stageBeforeUpdate =
++                    Interlocked.CompareExchange(
++                        ref _eventQueueProcessingStage,
++                        EventQueueProcessingStage.NotScheduled,
++                        EventQueueProcessingStage.Determining);
++                Debug.Assert(stageBeforeUpdate != EventQueueProcessingStage.NotScheduled);
++                if (stageBeforeUpdate == EventQueueProcessingStage.Determining)
++                {
++                    return;
++                }
++            }
++
++            UpdateEventQueueProcessingStage(eventQueue.IsEmpty);
++
++            int startTimeMs = Environment.TickCount;
++            do
++            {
++                ev.Context.HandleEvents(ev.Events);
++
++                // If there is a constant stream of new events, and/or if user callbacks take long to process an event, this
++                // work item may run for a long time. If work items of this type are using up all of the thread pool threads,
++                // collectively they may starve other types of work items from running. Before dequeuing and processing another
++                // event, check the elapsed time since the start of the work item and yield the thread after some time has
++                // elapsed to allow the thread pool to run other work items.
++                //
++                // The threshold chosen below was based on trying various thresholds and in trying to keep the latency of
++                // running another work item low when these work items are using up all of the thread pool worker threads. In
++                // such cases, the latency would be something like threshold / proc count. Smaller thresholds were tried and
++                // using Stopwatch instead (like 1 ms, 5 ms, etc.), from quick tests they appeared to have a slightly greater
++                // impact on throughput compared to the threshold chosen below, though it is slight enough that it may not
++                // matter much. Higher thresholds didn't seem to have any noticeable effect.
++            } while (Environment.TickCount - startTimeMs < 15 && eventQueue.TryDequeue(out ev));
++        }
++
++        private void FreeNativeResources()
++        {
++            if (_buffer != null)
++            {
++                Interop.Sys.FreeSocketEventBuffer(_buffer);
++            }
++        }
++
++        // The JIT is allowed to arbitrarily extend the lifetime of locals, which may retain SocketAsyncContext references,
++        // indirectly preventing Socket instances to be finalized, despite being no longer referenced by user code.
++        // To avoid this, the event handling logic is delegated to a non-inlined processing method.
++        // See discussion: https://github.com/dotnet/runtime/issues/37064
++        // SocketEventHandler holds an on-stack cache of SocketAsyncEngine members needed by the handler method.
++        private readonly struct SocketEventHandler
++        {
++            public Interop.Sys.SocketEvent* Buffer { get; }
++
++            private readonly ConcurrentDictionary<IntPtr, SocketAsyncContextWrapper> _handleToContextMap;
++            private readonly ConcurrentQueue<SocketIOEvent> _eventQueue;
++
++            public SocketEventHandler(SocketAsyncEngine engine)
++            {
++                Buffer = engine._buffer;
++                _handleToContextMap = engine._handleToContextMap;
++                _eventQueue = engine._eventQueue;
++            }
++
++            [MethodImpl(MethodImplOptions.NoInlining)]
++            public bool HandleSocketEvents(int numEvents)
++            {
++                bool enqueuedEvent = false;
++                foreach (var socketEvent in new ReadOnlySpan<Interop.Sys.SocketEvent>(Buffer, numEvents))
++                {
++                    if (_handleToContextMap.TryGetValue(socketEvent.Data, out SocketAsyncContextWrapper contextWrapper))
++                    {
++                        SocketAsyncContext context = contextWrapper.Context;
++
++                        if (context.PreferInlineCompletions)
++                        {
++                            context.HandleEventsInline(socketEvent.Events);
++                        }
++                        else
++                        {
++                            Interop.Sys.SocketEvents events = context.HandleSyncEventsSpeculatively(socketEvent.Events);
++
++                            if (events != Interop.Sys.SocketEvents.None)
++                            {
++                                _eventQueue.Enqueue(new SocketIOEvent(context, events));
++                                enqueuedEvent = true;
++                            }
++                        }
++                    }
++                }
++
++                return enqueuedEvent;
++            }
++        }
++
++        // struct wrapper is used in order to improve the performance of the epoll thread hot path by up to 3% of some TechEmpower benchmarks
++        // the goal is to have a dedicated generic instantiation and using:
++        // System.Collections.Concurrent.ConcurrentDictionary`2[System.IntPtr,System.Net.Sockets.SocketAsyncContextWrapper]::TryGetValueInternal(!0,int32,!1&)
++        // instead of:
++        // System.Collections.Concurrent.ConcurrentDictionary`2[System.IntPtr,System.__Canon]::TryGetValueInternal(!0,int32,!1&)
++        private readonly struct SocketAsyncContextWrapper
++        {
++            public SocketAsyncContextWrapper(SocketAsyncContext context) => Context = context;
++
++            internal SocketAsyncContext Context { get; }
++        }
++
++        private readonly struct SocketIOEvent
++        {
++            public SocketAsyncContext Context { get; }
++            public Interop.Sys.SocketEvents Events { get; }
++
++            public SocketIOEvent(SocketAsyncContext context, Interop.Sys.SocketEvents events)
++            {
++                Context = context;
++                Events = events;
++            }
++        }
++    }
++}
+diff --git a/src/libraries/System.Private.CoreLib/src/System.Private.CoreLib.Shared.projitems b/src/libraries/System.Private.CoreLib/src/System.Private.CoreLib.Shared.projitems
+index fc30a00f0..9e12b5a7f 100644
+--- a/src/libraries/System.Private.CoreLib/src/System.Private.CoreLib.Shared.projitems
++++ b/src/libraries/System.Private.CoreLib/src/System.Private.CoreLib.Shared.projitems
+@@ -13,7 +13,7 @@
+     <Nullable>enable</Nullable>
+     <IsiOSLike Condition="'$(TargetsMacCatalyst)' == 'true' or '$(TargetsiOS)' == 'true' or '$(TargetstvOS)' == 'true'">true</IsiOSLike>
+     <IsApplePlatform Condition="'$(TargetsOSX)' == 'true' or '$(IsiOSLike)' == 'true'">true</IsApplePlatform>
+-    <IsMobileLike Condition="'$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true' or '$(IsiOSLike)' == 'true' or '$(TargetsAndroid)' == 'true'">true</IsMobileLike>
++    <IsMobileLike Condition="'$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true' or '$(IsiOSLike)' == 'true' or '$(TargetsAndroid)' == 'true' or '$(TargetsLibnx)' == 'true'">true</IsMobileLike>
+     <SupportsArmIntrinsics Condition="'$(Platform)' == 'arm64'">true</SupportsArmIntrinsics>
+     <SupportsWasmIntrinsics Condition="'$(Platform)' == 'wasm'">true</SupportsWasmIntrinsics>
+     <SupportsX86Intrinsics Condition="'$(Platform)' == 'x64' or '$(Platform)' == 'x86'">true</SupportsX86Intrinsics>
+@@ -22,7 +22,7 @@
+     <ILLinkSharedDirectory>$(MSBuildThisFileDirectory)ILLink\</ILLinkSharedDirectory>
+     <IsBigEndian Condition="'$(Platform)' == 's390x'">true</IsBigEndian>
+     <Is64Bit Condition="'$(Platform)' == 'arm64' or '$(Platform)' == 'x64' or '$(Platform)' == 's390x' or '$(Platform)' == 'loongarch64' or '$(Platform)' == 'ppc64le' or '$(Platform)' == 'riscv64'">true</Is64Bit>
+-    <UseMinimalGlobalizationData Condition="'$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true'">true</UseMinimalGlobalizationData>
++    <UseMinimalGlobalizationData Condition="'$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true' or '$(TargetsLibnx)' == 'true'">true</UseMinimalGlobalizationData>
+     <EnableLibraryImportGenerator>true</EnableLibraryImportGenerator>
+   </PropertyGroup>
+   <PropertyGroup>
+@@ -48,6 +48,7 @@
+     <DefineConstants Condition="'$(Targetsillumos)' == 'true'">$(DefineConstants);TARGET_ILLUMOS</DefineConstants>
+     <DefineConstants Condition="'$(TargetsSolaris)' == 'true'">$(DefineConstants);TARGET_SOLARIS</DefineConstants>
+     <DefineConstants Condition="'$(TargetsHaiku)' == 'true'">$(DefineConstants);TARGET_HAIKU</DefineConstants>
++    <DefineConstants Condition="'$(TargetsLibnx)' == 'true'">$(DefineConstants);TARGET_LIBNX</DefineConstants>
+   </PropertyGroup>
+   <ItemGroup>
+     <ApiCompatSuppressionFile Include="$(MSBuildThisFileDirectory)CompatibilitySuppressions.xml" />
+@@ -2336,6 +2337,9 @@
+     <Compile Include="$(MSBuildThisFileDirectory)System\Environment.Variables.Windows.cs" />
+     <Compile Include="$(MSBuildThisFileDirectory)System\Threading\Semaphore.Windows.cs" />
+     <Compile Include="$(MSBuildThisFileDirectory)System\Threading\EventWaitHandle.Windows.cs" />
++  </ItemGroup>  
++  <ItemGroup Condition="'$(TargetsLibnx)' == 'true'">
++    <Compile Include="$(MSBuildThisFileDirectory)System\Environment.Libnx.cs" />
+   </ItemGroup>
+   <ItemGroup Condition="'$(TargetsUnix)' == 'true' or '$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true'">
+     <Compile Include="$(CommonPath)Interop\Unix\Interop.Errors.cs">
+diff --git a/src/libraries/System.Private.CoreLib/src/System/Environment.Libnx.cs b/src/libraries/System.Private.CoreLib/src/System/Environment.Libnx.cs
+new file mode 100644
+index 000000000..b823f08d8
+--- /dev/null
++++ b/src/libraries/System.Private.CoreLib/src/System/Environment.Libnx.cs
+@@ -0,0 +1,12 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++using System.IO;
++
++namespace System
++{
++    public static partial class Environment
++    {
++        public static long WorkingSet => 0;
++    }
++}
+diff --git a/src/libraries/System.Private.CoreLib/src/System/IO/Path.Unix.cs b/src/libraries/System.Private.CoreLib/src/System/IO/Path.Unix.cs
+index 075a14d93..8ba768932 100644
+--- a/src/libraries/System.Private.CoreLib/src/System/IO/Path.Unix.cs
++++ b/src/libraries/System.Private.CoreLib/src/System/IO/Path.Unix.cs
+@@ -131,7 +131,11 @@ public static bool IsPathRooted([NotNullWhen(true)] string? path)
+ 
+         public static bool IsPathRooted(ReadOnlySpan<char> path)
+         {
++#if TARGET_LIBNX
++            return GetPathRoot(path).Length > 0;
++#else
+             return path.StartsWith(PathInternal.DirectorySeparatorChar);
++#endif
+         }
+ 
+         /// <summary>
+@@ -139,13 +143,21 @@ public static bool IsPathRooted(ReadOnlySpan<char> path)
+         /// </summary>
+         public static string? GetPathRoot(string? path)
+         {
+-            if (PathInternal.IsEffectivelyEmpty(path)) return null;
++            if (PathInternal.IsEffectivelyEmpty(path) || path is null) return null;
++#if TARGET_LIBNX
++            return PathInternal.GetLibnxRoot(path.AsSpan());
++#else
+             return IsPathRooted(path) ? PathInternal.DirectorySeparatorCharAsString : string.Empty;
++#endif
+         }
+ 
+         public static ReadOnlySpan<char> GetPathRoot(ReadOnlySpan<char> path)
+         {
++#if TARGET_LIBNX
++            return PathInternal.GetLibnxRoot(path).AsSpan();
++#else
+             return IsPathRooted(path) ? PathInternal.DirectorySeparatorCharAsString.AsSpan() : ReadOnlySpan<char>.Empty;
++#endif
+         }
+ 
+     }
+diff --git a/src/libraries/System.Private.CoreLib/src/System/OperatingSystem.cs b/src/libraries/System.Private.CoreLib/src/System/OperatingSystem.cs
+index 8dca64953..f9b35d289 100644
+--- a/src/libraries/System.Private.CoreLib/src/System/OperatingSystem.cs
++++ b/src/libraries/System.Private.CoreLib/src/System/OperatingSystem.cs
+@@ -38,6 +38,8 @@ public sealed class OperatingSystem : ISerializable, ICloneable
+         "ILLUMOS"
+ #elif TARGET_SOLARIS
+         "SOLARIS"
++#elif TARGET_LIBNX
++        "LIBNX"
+ #else
+ #error Unknown OS, add a corresponding TARGET_* constant to System.Private.CoreLib.Shared.projitems
+ #endif
+diff --git a/src/mono/CMakeLists.txt b/src/mono/CMakeLists.txt
+index 781cddbfd..6d1357163 100644
+--- a/src/mono/CMakeLists.txt
++++ b/src/mono/CMakeLists.txt
+@@ -165,6 +165,10 @@ if(NOT AOT_TARGET_TRIPLE STREQUAL "")
+   elseif(AOT_TARGET_TRIPLE STREQUAL "riscv64-linux-gnu")
+     set(TARGET_SYSTEM_NAME "linux")
+     set(TARGET_ARCH "riscv64")
++  elseif(AOT_TARGET_TRIPLE STREQUAL "aarch64-none-elf")
++    # I'm not sure if aarch64-none-elf is used for anything else.
++    set(TARGET_SYSTEM_NAME "libnx")
++    set(TARGET_ARCH "arm64")
+   else()
+     message(FATAL_ERROR "AOT target '${AOT_TARGET_TRIPLE}' not supported.")
+   endif()
+@@ -292,6 +296,23 @@ elseif(CLR_CMAKE_HOST_OS STREQUAL "haiku")
+   set(HOST_HAIKU 1)
+   add_definitions(-D_GNU_SOURCE -D_BSD_SOURCE -D_REENTRANT)
+   add_definitions(-D_THREAD_SAFE)
++elseif(CLR_CMAKE_HOST_OS STREQUAL "libnx")
++  set(HOST_LINUX 1)
++  set(HOST_LIBNX 1)
++  add_definitions(-DHOST_LIBNX)
++  
++  set(DISABLE_SHARED_LIBS 1)
++  set(DISABLE_EXECUTABLES 1)
++  set(ENABLE_PERFTRACING 0)
++  
++  # We need the marshal-ilgen component for proper interop
++  set(STATIC_COMPONENTS 1)
++  set(DISABLE_LOG_PROFILER_GZ 1)
++
++  # If we ever want a chance of JIT to work we need to avoid causing exceptions
++  # On unix mono handles these with signals but we don't have that on switch
++  # Libnx does provide a way to handle exceptions and that would be the correct way to do this with better performances
++  add_definitions(-DMONO_ARCH_DISABLE_HW_TRAPS=1)
+ else()
+   message(FATAL_ERROR "Host '${CLR_CMAKE_HOST_OS}' not supported.")
+ endif()
+@@ -356,6 +377,10 @@ elseif(TARGET_SYSTEM_NAME STREQUAL "sunos")
+ elseif(TARGET_SYSTEM_NAME STREQUAL "freebsd")
+   set(TARGET_UNIX 1)
+   set(TARGET_FREEBSD 1)
++elseif(TARGET_SYSTEM_NAME STREQUAL "libnx")
++  set(TARGET_UNIX 1)
++  set(TARGET_LIBNX 1)
++  add_definitions(-DTARGET_LIBNX)
+ elseif(TARGET_SYSTEM_NAME STREQUAL "haiku")
+   set(TARGET_UNIX 1)
+   set(TARGET_HAIKU 1)
+@@ -734,6 +759,8 @@ elseif(GC_SUSPEND STREQUAL "default")
+     # use preemptive
+   elseif(TARGET_SYSTEM_NAME STREQUAL "WASI")
+     # use preemptive
++  elseif(TARGET_SYSTEM_NAME STREQUAL "libnx")
++    set(ENABLE_COOP_SUSPEND 1)
+   else()
+     set(ENABLE_HYBRID_SUSPEND 1)
+   endif()
+@@ -768,7 +795,11 @@ else()
+     endif()
+   endif()
+   set(EGLIB_PATHSEP "/")
+-  set(EGLIB_SEARCHSEP ":")
++  if (HOST_LIBNX)
++    set(EGLIB_SEARCHSEP ";")
++  else()
++    set(EGLIB_SEARCHSEP ":")
++  endif()
+   set(EGLIB_OS "UNIX")
+   set(EGLIB_GSIZE_FORMAT "\"zu\"")
+ endif()
+diff --git a/src/mono/System.Private.CoreLib/System.Private.CoreLib.csproj b/src/mono/System.Private.CoreLib/System.Private.CoreLib.csproj
+index f4f323c52..bdf035d47 100644
+--- a/src/mono/System.Private.CoreLib/System.Private.CoreLib.csproj
++++ b/src/mono/System.Private.CoreLib/System.Private.CoreLib.csproj
+@@ -279,6 +279,9 @@
+   <ItemGroup Condition="'$(TargetsWasi)' == 'true' or '$(TargetsAnyOS)' == 'true'">
+     <SupportedPlatform Include="wasi"/>
+   </ItemGroup>
++  <ItemGroup Condition="'$(TargetsLibnx)' == 'true' or '$(TargetsAnyOS)' == 'true'">
++    <SupportedPlatform Include="libnx"/>
++  </ItemGroup>
+ 
+   <Import Project="$(LibrariesProjectRoot)\System.Private.CoreLib\src\System.Private.CoreLib.Shared.projitems" Label="Shared" />
+ 
+diff --git a/src/mono/cmake/configure.cmake b/src/mono/cmake/configure.cmake
+index 6b9e021f1..085f1818d 100644
+--- a/src/mono/cmake/configure.cmake
++++ b/src/mono/cmake/configure.cmake
+@@ -282,4 +282,8 @@ elseif(HOST_WASI)
+   set(HAVE_GETHOSTBYNAME2 0)
+   set(HAVE_EXECVP 0)
+   set(HAVE_MMAP 1)
++elseif(HOST_LIBNX)
++  set(HAVE_PTHREAD_KILL 0)
++  set(HAVE_GNU_STRERROR_R 0)
++  set(HAVE_SIGACTION 0)
+ endif()
+diff --git a/src/mono/mono.proj b/src/mono/mono.proj
+index 4d14e7f8d..a39fc6e15 100644
+--- a/src/mono/mono.proj
++++ b/src/mono/mono.proj
+@@ -39,6 +39,9 @@
+     <BuildMonoAOTCrossCompiler Condition="'$(TargetsBrowser)' == 'true'">true</BuildMonoAOTCrossCompiler>
+     <BuildMonoAOTCrossCompiler Condition="'$(TargetsAndroid)' == 'true'">true</BuildMonoAOTCrossCompiler>
+     <BuildMonoAOTCrossCompiler Condition="'$(TargetsWasi)' == 'true'">true</BuildMonoAOTCrossCompiler>
++    <!-- HACK: there must be something missing in the build system. When this condition is true building the runtime fails because cmake mixes up the toolchains -->
++    <!-- So i set the BuildMonoAOTCrossCompilerOnly flag to only take the cross compiler path when it's excplicitly enabled -->
++    <BuildMonoAOTCrossCompiler Condition="'$(TargetsLibnx)' == 'true' and '$(BuildMonoAOTCrossCompilerOnly)' == 'true'">true</BuildMonoAOTCrossCompiler>
+     <MonoUseCrossTool Condition="'$(TargetsAndroid)' == 'true' or '$(TargetsLinuxBionic)' == 'true'">true</MonoUseCrossTool>
+     <MonoUseCrossTool Condition="'$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true'">true</MonoUseCrossTool>
+     <MonoUseCrossTool Condition="'$(TargetstvOS)' == 'true' or '$(TargetsiOS)' == 'true' or '$(TargetsMacCatalyst)' == 'true'">true</MonoUseCrossTool>
+@@ -63,6 +66,7 @@
+   <!-- default thread suspend for specific platforms -->
+   <PropertyGroup>
+     <MonoThreadSuspend Condition="'$(TargetswatchOS)' == 'true' and '$(MonoThreadSuspend)' == ''">coop</MonoThreadSuspend>
++        <MonoThreadSuspend Condition="'$(TargetsLibnx)' == 'true' and '$(MonoThreadSuspend)' == ''">coop</MonoThreadSuspend>
+     <MonoThreadSuspend Condition="'$(TargetsBrowser)' == 'true' and '$(WasmEnableThreads)' == 'true' and '$(MonoThreadSuspend)' == ''">coop</MonoThreadSuspend>
+     <!-- wasm isn't really preemptive, but we don't want safepoints -->
+     <MonoThreadSuspend Condition="( '$(TargetsBrowser)' == 'true' or '$(TargetsWasi)' == 'true' ) and '$(MonoThreadSuspend)' == ''">preemptive</MonoThreadSuspend>
+@@ -490,6 +494,12 @@ JS_ENGINES = [NODE_JS]
+       <_MonoBuildEnv Include="TARGET_BUILD_ARCH=arm64" />
+     </ItemGroup>
+ 
++    <!-- ARM64 libnx cross build options -->
++    <ItemGroup Condition="'$(TargetsLibnx)' == 'true' and '$(MonoCrossDir)' != ''">
++      <_MonoCMakeArgs Include="-DCMAKE_TOOLCHAIN_FILE=$(CrossToolchainFile)" />
++      <_MonoBuildEnv Include="TARGET_BUILD_ARCH=arm64" />
++    </ItemGroup>
++
+     <!-- Windows specific options -->
+     <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
+       <_MonoCPPFLAGS Include="-DWIN32" />
+@@ -687,6 +697,12 @@ JS_ENGINES = [NODE_JS]
+       <_MonoCMakeArgs Include="-DFEATURE_PERFTRACING_DISABLE_DEFAULT_LISTEN_PORT=1"/>
+     </ItemGroup>
+ 
++    <ItemGroup Condition="'$(TargetsLibnx)' == 'true'">
++      <_MonoCMakeArgs Include="-DFEATURE_PERFTRACING_PAL_TCP=1"/>
++      <_MonoCMakeArgs Include="-DFEATURE_PERFTRACING_DISABLE_DEFAULT_LISTEN_PORT=1"/>
++      <_MonoBuildEnv Include="TARGET_BUILD_ARCH=arm64" />
++    </ItemGroup>
++
+     <ItemGroup Condition="'$(TargetsWasi)' == 'true'">
+       <_MonoCMakeArgs Include="-DFEATURE_PERFTRACING_DISABLE_PERFTRACING_LISTEN_PORTS=1"/>
+       <_MonoCMakeArgs Include="-DFEATURE_PERFTRACING_DISABLE_DEFAULT_LISTEN_PORT=1"/>
+@@ -815,6 +831,14 @@ JS_ENGINES = [NODE_JS]
+       <MonoAotOffsetsPrefix>$(MonoCrossDir)/usr/lib/gcc/aarch64-linux-gnu/7</MonoAotOffsetsPrefix>
+     </PropertyGroup>
+ 
++    <PropertyGroup Condition="'$(TargetsLibnx)' == 'true' and '$(Platform)' == 'arm64'">
++      <MonoUseCrossTool>true</MonoUseCrossTool>
++      <MonoAotAbi>aarch64-none-elf</MonoAotAbi>
++      <MonoAotOffsetsFile>$(MonoObjCrossDir)offsets-aarch64-none-elf.h</MonoAotOffsetsFile>
++      <MonoAotOffsetsPrefix>$(MonoCrossDir)/devkitA64/bin/aarch64-none-elf</MonoAotOffsetsPrefix>
++      <MonoAotCMakeSysroot>$(MonoCrossDir)</MonoAotCMakeSysroot>
++    </PropertyGroup>
++
+     <PropertyGroup Condition="'$(MonoUseLLVMPackage)' == 'true'">
+       <_MonoLLVMTargetArchitecture>$(TargetArchitecture)</_MonoLLVMTargetArchitecture>
+       <_MonoLLVMHostArchitecture>$(AotHostArchitecture)</_MonoLLVMHostArchitecture>
+diff --git a/src/mono/mono/eglib/gmodule-unix.c b/src/mono/mono/eglib/gmodule-unix.c
+index cfe550ea8..bec340e41 100644
+--- a/src/mono/mono/eglib/gmodule-unix.c
++++ b/src/mono/mono/eglib/gmodule-unix.c
+@@ -33,7 +33,7 @@
+ #include <glib.h>
+ #include <gmodule.h>
+ 
+-#if defined(G_OS_UNIX) && defined(HAVE_DLFCN_H)
++#if defined(G_OS_UNIX) && defined(HAVE_DLFCN_H) && !defined(HOST_LIBNX)
+ #include <dlfcn.h>
+ 
+ /* For Linux and Solaris, need to add others as we port this */
+diff --git a/src/mono/mono/eglib/gstr.c b/src/mono/mono/eglib/gstr.c
+index 557977cab..816dfef35 100644
+--- a/src/mono/mono/eglib/gstr.c
++++ b/src/mono/mono/eglib/gstr.c
+@@ -64,7 +64,7 @@ g_strndup (const gchar *str, gsize n)
+ 
+ gint g_vasprintf (gchar **ret, const gchar *fmt, va_list ap)
+ {
+-#if defined (HAVE_VASPRINTF) && !defined (ENABLE_OVERRIDABLE_ALLOCATORS)
++#if defined (HAVE_VASPRINTF) && !defined (ENABLE_OVERRIDABLE_ALLOCATORS) && !defined(HOST_LIBNX)
+   return vasprintf (ret, fmt, ap);
+ #else
+ 	char *buf;
+diff --git a/src/mono/mono/metadata/threads.c b/src/mono/mono/metadata/threads.c
+index 70de7bc5f..39b852367 100644
+--- a/src/mono/mono/metadata/threads.c
++++ b/src/mono/mono/metadata/threads.c
+@@ -678,6 +678,8 @@ mono_thread_internal_set_priority (MonoInternalThread *internal, MonoThreadPrior
+ #elif HOST_WASI
+ 	// Thread scheduling isn't yet implemented in the WASI build
+ 	return;
++#elif defined(HOST_LIBNX)
++	return;
+ #else /* !HOST_WIN32 and not HOST_FUCHSIA */
+ 	pthread_t tid;
+ 	int policy = SCHED_OTHER;
+diff --git a/src/mono/mono/mini/CMakeLists.txt b/src/mono/mono/mini/CMakeLists.txt
+index 23b8d15bf..37fe84eb4 100644
+--- a/src/mono/mono/mini/CMakeLists.txt
++++ b/src/mono/mono/mini/CMakeLists.txt
+@@ -33,6 +33,8 @@ elseif(HOST_FREEBSD)
+   set(OS_LIBS pthread m)
+ elseif(HOST_HAIKU)
+   set(OS_LIBS network)
++elseif(HOST_LIBNX)
++  set(OS_LIBS pthread m)
+ endif()
+ 
+ #
+@@ -227,7 +229,7 @@ set(posix_sources
+ 
+ if(HOST_DARWIN)
+ set(os_sources "${darwin_sources};${posix_sources}")
+-elseif(HOST_LINUX OR HOST_SOLARIS OR HOST_FREEBSD OR HOST_HAIKU)
++elseif(HOST_LINUX OR HOST_SOLARIS OR HOST_FREEBSD OR HOST_HAIKU OR HOST_LIBNX)
+ set(os_sources "${posix_sources}")
+ elseif(HOST_WIN32)
+ set(os_sources "${windows_sources}")
+diff --git a/src/mono/mono/mini/exceptions-arm64.c b/src/mono/mono/mini/exceptions-arm64.c
+index 28ce79cd0..1434db837 100644
+--- a/src/mono/mono/mini/exceptions-arm64.c
++++ b/src/mono/mono/mini/exceptions-arm64.c
+@@ -35,9 +35,11 @@ mono_arch_get_restore_context (MonoTrampInfo **info, gboolean aot)
+ 	guint8 *labels [16];
+ 
+ 	size = 256;
+-	code = start = mono_global_codeman_reserve (size);
++	code = mono_global_codeman_reserve (size);
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (code);
++	g_assert (code);
++	start = code;
+ 
+ 	arm_movx (code, ARMREG_IP0, ARMREG_R0);
+ 	ctx_reg = ARMREG_IP0;
+@@ -67,10 +69,11 @@ mono_arch_get_restore_context (MonoTrampInfo **info, gboolean aot)
+ 
+ 	g_assert ((code - start) < size);
+ 
+-	MINI_END_CODEGEN (start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_EXCEPTION_HANDLING, NULL);
++	gint32 finaL_size = GPTRDIFF_TO_INT (code - start);
++	MINI_END_CODEGEN_EX (start, finaL_size, MONO_PROFILER_CODE_BUFFER_EXCEPTION_HANDLING, NULL);
+ 
+ 	if (info)
+-		*info = mono_tramp_info_create ("restore_context", start, GPTRDIFF_TO_UINT32 (code - start), ji, unwind_ops);
++		*info = mono_tramp_info_create ("restore_context", start, finaL_size, ji, unwind_ops);
+ 
+ 	return MINI_ADDR_TO_FTNPTR (start);
+ }
+@@ -86,7 +89,7 @@ mono_arch_get_call_filter (MonoTrampInfo **info, gboolean aot)
+ 	guint8 *labels [16];
+ 
+ 	size = 512;
+-	start = code = mono_global_codeman_reserve (size);
++	code = mono_global_codeman_reserve (size);
+ 
+ 	/* Compute stack frame size and offsets */
+ 	offset = 0;
+@@ -109,7 +112,8 @@ mono_arch_get_call_filter (MonoTrampInfo **info, gboolean aot)
+ 	 * returning the value returned by the call.
+ 	 */
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (code);
++	start = code;
+ 
+ 	/* Setup a frame */
+ 	arm_stpx_pre (code, ARMREG_FP, ARMREG_LR, ARMREG_SP, -frame_size);
+@@ -158,10 +162,11 @@ mono_arch_get_call_filter (MonoTrampInfo **info, gboolean aot)
+ 
+ 	g_assert ((code - start) < size);
+ 
+-	MINI_END_CODEGEN (start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_EXCEPTION_HANDLING, NULL);
++	gint32 final_size = GPTRDIFF_TO_INT (code - start);
++	MINI_END_CODEGEN_EX (start, final_size, MONO_PROFILER_CODE_BUFFER_EXCEPTION_HANDLING, NULL);
+ 
+ 	if (info)
+-		*info = mono_tramp_info_create ("call_filter", start, GPTRDIFF_TO_UINT32 (code - start), ji, unwind_ops);
++		*info = mono_tramp_info_create ("call_filter", start, final_size, ji, unwind_ops);
+ 
+ 	return MINI_ADDR_TO_FTNPTR (start);
+ }
+@@ -174,7 +179,7 @@ get_throw_trampoline (int size, gboolean corlib, gboolean rethrow, gboolean llvm
+ 	GSList *unwind_ops = NULL;
+ 	int i, offset, gregs_offset, fregs_offset, frame_size, num_fregs;
+ 
+-	code = start = mono_global_codeman_reserve (size);
++	code = mono_global_codeman_reserve (size);
+ 
+ 	/* We are being called by JITted code, the exception object/type token is in R0 */
+ 
+@@ -191,7 +196,8 @@ get_throw_trampoline (int size, gboolean corlib, gboolean rethrow, gboolean llvm
+ 	offset += num_fregs * 8;
+ 	frame_size = ALIGN_TO (offset, MONO_ARCH_FRAME_ALIGNMENT);
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX(code);
++	start = code;
+ 
+ 	/* Setup a frame */
+ 	arm_stpx_pre (code, ARMREG_FP, ARMREG_LR, ARMREG_SP, -frame_size);
+@@ -262,10 +268,11 @@ get_throw_trampoline (int size, gboolean corlib, gboolean rethrow, gboolean llvm
+ 
+ 	g_assert ((code - start) < size);
+ 
+-	MINI_END_CODEGEN (start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_EXCEPTION_HANDLING, NULL);
++	gint32 final_size = GPTRDIFF_TO_INT (code - start);
++	MINI_END_CODEGEN_EX (start, final_size, MONO_PROFILER_CODE_BUFFER_EXCEPTION_HANDLING, NULL);
+ 
+ 	if (info)
+-		*info = mono_tramp_info_create (tramp_name, start, GPTRDIFF_TO_UINT32 (code - start), ji, unwind_ops);
++		*info = mono_tramp_info_create (tramp_name, start, final_size, ji, unwind_ops);
+ 
+ 	return MINI_ADDR_TO_FTNPTR (start);
+ }
+@@ -537,7 +544,7 @@ handle_signal_exception (gpointer obj)
+ gboolean
+ mono_arch_handle_exception (void *ctx, gpointer obj)
+ {
+-#if defined(MONO_CROSS_COMPILE)
++#if defined(MONO_CROSS_COMPILE) || defined(HOST_LIBNX)
+ 	g_assert_not_reached ();
+ #else
+ 	MonoJitTlsData *jit_tls;
+@@ -565,7 +572,7 @@ mono_arch_handle_exception (void *ctx, gpointer obj)
+ gpointer
+ mono_arch_ip_from_context (void *sigctx)
+ {
+-#ifdef MONO_CROSS_COMPILE
++#if defined(MONO_CROSS_COMPILE) || defined(HOST_LIBNX)
+ 	g_assert_not_reached ();
+ 	return NULL;
+ #else
+diff --git a/src/mono/mono/mini/mini-arm64.c b/src/mono/mono/mini/mini-arm64.c
+index ef4e76ef3..4aedd2db3 100644
+--- a/src/mono/mono/mini/mini-arm64.c
++++ b/src/mono/mono/mini/mini-arm64.c
+@@ -181,11 +181,12 @@ get_delegate_invoke_impl (gboolean has_target, gboolean param_count, guint32 *co
+ {
+ 	guint8 *code, *start;
+ 
+-	MINI_BEGIN_CODEGEN ();
+-
+ 	if (has_target) {
+ 		int size = 16;
+-		start = code = mono_global_codeman_reserve (size);
++		code = mono_global_codeman_reserve (size);
++		
++		MINI_BEGIN_CODEGEN_EX (code);
++		start = code;
+ 
+ 		/* Replace the this argument with the target */
+ 		arm_dmb (code, ARM_DMB_ISHLD);
+@@ -198,7 +199,10 @@ get_delegate_invoke_impl (gboolean has_target, gboolean param_count, guint32 *co
+ 		int size, i;
+ 
+ 		size = 8 + param_count * 4;
+-		start = code = mono_global_codeman_reserve (size);
++		code = mono_global_codeman_reserve (size);
++		
++		MINI_BEGIN_CODEGEN_EX (code);
++		start = code;
+ 
+ 		arm_ldrx (code, ARMREG_IP0, ARMREG_R0, MONO_STRUCT_OFFSET (MonoDelegate, method_ptr));
+ 		/* slide down the arguments */
+@@ -208,11 +212,12 @@ get_delegate_invoke_impl (gboolean has_target, gboolean param_count, guint32 *co
+ 
+ 		g_assert ((code - start) <= size);
+ 	}
+-	MINI_END_CODEGEN (start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_DELEGATE_INVOKE, NULL);
+-
++	
+ 	if (code_size)
+ 		*code_size = GPTRDIFF_TO_UINT32 (code - start);
+ 
++	MINI_END_CODEGEN_EX(start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_DELEGATE_INVOKE, NULL);
++
+ 	return MINI_ADDR_TO_FTNPTR (start);
+ }
+ 
+@@ -229,10 +234,11 @@ get_delegate_virtual_invoke_impl (MonoTrampInfo **info, gboolean load_imt_reg, i
+ 	if (offset / (int)sizeof (target_mgreg_t) > MAX_VIRTUAL_DELEGATE_OFFSET)
+ 		return NULL;
+ 
+-	MINI_BEGIN_CODEGEN ();
+-
+-	start = code = mono_global_codeman_reserve (size);
+-
++	code = mono_global_codeman_reserve (size);
++	
++	MINI_BEGIN_CODEGEN_EX(code);
++	start = code;
++		
+ 	unwind_ops = mono_arch_get_cie_program ();
+ 
+ 	/* Replace the this argument with the target */
+@@ -250,10 +256,11 @@ get_delegate_virtual_invoke_impl (MonoTrampInfo **info, gboolean load_imt_reg, i
+ 
+ 	g_assert ((code - start) <= size);
+ 
+-	MINI_END_CODEGEN (start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_DELEGATE_INVOKE, NULL);
++	gint32 final_size = GPTRDIFF_TO_INT (code - start);
++	MINI_END_CODEGEN_EX(start, final_size, MONO_PROFILER_CODE_BUFFER_DELEGATE_INVOKE, NULL);
+ 
+ 	tramp_name = mono_get_delegate_virtual_invoke_impl_name (load_imt_reg, offset);
+-	*info = mono_tramp_info_create (tramp_name, start, GPTRDIFF_TO_UINT32 (code - start), NULL, unwind_ops);
++	*info = mono_tramp_info_create (tramp_name, start, final_size, NULL, unwind_ops);
+ 	g_free (tramp_name);
+ 
+ 	return start;
+@@ -383,6 +390,10 @@ mono_arch_init (void)
+ #ifdef MONO_ARCH_ENABLE_PTRAUTH
+ 	enable_ptrauth = TRUE;
+ #endif
++#ifdef TARGET_LIBNX
++	mini_debug_options.soft_breakpoints = TRUE;
++	mini_debug_options.explicit_null_checks = TRUE;
++#endif
+ 
+ 	if (!mono_aot_only)
+ 		bp_trampoline = mini_get_breakpoint_trampoline ();
+@@ -1293,6 +1304,8 @@ create_thunk (MonoCompile *cfg, guchar *code, const guchar *target, int relocati
+ 	guint8 *target_thunk;
+ 	MonoJitMemoryManager* jit_mm;
+ 
++	// With the current codegen implementation on libnx, this function is broken because it mixes up rx and rw addresses....
++
+ 	if (cfg) {
+ 		/*
+ 		 * This can be called multiple times during JITting,
+@@ -6759,16 +6772,16 @@ mono_arch_build_imt_trampoline (MonoVTable *vtable, MonoIMTCheckItem **imt_entri
+ 			buf_len += 6 * 4;
+ 		}
+ 	}
+-
++	
+ 	if (fail_tramp) {
+ 		buf = (guint8 *)mini_alloc_generic_virtual_trampoline (vtable, buf_len);
+ 	} else {
+ 		MonoMemoryManager *mem_manager = m_class_get_mem_manager (vtable->klass);
+ 		buf = mono_mem_manager_code_reserve (mem_manager, buf_len);
+ 	}
+-	code = buf;
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (buf);
++	code = buf;
+ 
+ 	/*
+ 	 * We are called by JITted code, which passes in the IMT argument in
+@@ -6839,7 +6852,7 @@ mono_arch_build_imt_trampoline (MonoVTable *vtable, MonoIMTCheckItem **imt_entri
+ 
+ 	g_assert ((code - buf) <= buf_len);
+ 
+-	MINI_END_CODEGEN (buf, GPTRDIFF_TO_INT (code - buf), MONO_PROFILER_CODE_BUFFER_IMT_TRAMPOLINE, NULL);
++	MINI_END_CODEGEN_EX(buf, GPTRDIFF_TO_INT (code - buf), MONO_PROFILER_CODE_BUFFER_IMT_TRAMPOLINE, NULL);
+ 
+ 	return MINI_ADDR_TO_FTNPTR (buf);
+ }
+diff --git a/src/mono/mono/mini/mini-arm64.h b/src/mono/mono/mini/mini-arm64.h
+index ae7f30a93..1d045fd92 100644
+--- a/src/mono/mono/mini/mini-arm64.h
++++ b/src/mono/mono/mini/mini-arm64.h
+@@ -154,7 +154,11 @@ typedef struct {
+ #define MONO_ARCH_IMT_REG MONO_ARCH_RGCTX_REG
+ #define MONO_ARCH_VTABLE_REG ARMREG_R0
+ #define MONO_ARCH_HAVE_GENERALIZED_IMT_TRAMPOLINE 1
++
++#ifndef HOST_LIBNX
+ #define MONO_ARCH_USE_SIGACTION 1
++#endif
++
+ #ifdef HOST_TVOS
+ #define MONO_ARCH_HAS_NO_PROPER_MONOCTX 1
+ #endif
+diff --git a/src/mono/mono/mini/mini-posix.c b/src/mono/mono/mini/mini-posix.c
+index 4c36fd6b3..a7e0d2f48 100644
+--- a/src/mono/mono/mini/mini-posix.c
++++ b/src/mono/mono/mini/mini-posix.c
+@@ -97,7 +97,7 @@
+ #endif
+ #include "mono/utils/mono-tls-inline.h"
+ 
+-#if defined(HOST_WATCHOS)
++#if defined(HOST_WATCHOS) || defined(HOST_LIBNX)
+ 
+ void
+ mono_runtime_setup_stat_profiler (void)
+diff --git a/src/mono/mono/mini/mini-runtime.c b/src/mono/mono/mini/mini-runtime.c
+index 7cf63847f..39529a460 100644
+--- a/src/mono/mono/mini/mini-runtime.c
++++ b/src/mono/mono/mini/mini-runtime.c
+@@ -386,6 +386,11 @@ gboolean mono_method_same_domain (MonoJitInfo *caller, MonoJitInfo *callee)
+ 	return TRUE;
+ }
+ 
++MonoCodeManager* mono_global_codeman_get(void)
++{
++	return global_codeman;
++}
++
+ /*
+  * mono_global_codeman_reserve:
+  *
+@@ -1508,7 +1513,8 @@ mono_resolve_patch_target_ext (MonoMemoryManager *mem_manager, MonoMethod *metho
+ 		int i;
+ 
+ 		if (method && method->dynamic) {
+-			jump_table = (void **)mono_code_manager_reserve (mono_dynamic_code_hash_lookup (method)->code_mp, sizeof (gpointer) * patch_info->data.table->table_size);
++			MonoCodeManager* codeman = mono_dynamic_code_hash_lookup (method)->code_mp;
++			jump_table = (void **)mono_code_manager_reserve (codeman, sizeof (gpointer) * patch_info->data.table->table_size);
+ 		} else {
+ 			MonoMemoryManager *method_mem_manager = method ? m_method_get_mem_manager (method) : mem_manager;
+ 			if (mono_aot_only) {
+@@ -1518,11 +1524,11 @@ mono_resolve_patch_target_ext (MonoMemoryManager *mem_manager, MonoMethod *metho
+ 			}
+ 		}
+ 
+-		mono_codeman_enable_write ();
++		jump_table = (gpointer*)mono_codeman_enable_write_ex (jump_table, G_STRLOC);
+ 		for (i = 0; i < patch_info->data.table->table_size; i++) {
+ 			jump_table [i] = code + GPOINTER_TO_INT (patch_info->data.table->table [i]);
+ 		}
+-		mono_codeman_disable_write ();
++		jump_table = (gpointer*)mono_codeman_disable_write_ex (jump_table, G_STRLOC);
+ 
+ 		target = jump_table;
+ #else
+diff --git a/src/mono/mono/mini/mini-runtime.h b/src/mono/mono/mini/mini-runtime.h
+index 45fbe080c..042b5c653 100644
+--- a/src/mono/mono/mini/mini-runtime.h
++++ b/src/mono/mono/mini/mini-runtime.h
+@@ -711,8 +711,29 @@ void mono_chain_signal_to_default_sigsegv_handler (void);
+ 
+ void mini_register_sigterm_handler (void);
+ 
++// HACK: this overwrites code with a possibly different address needed for writing....
++#define MINI_BEGIN_CODEGEN_EX(code) do { \
++	code = mono_codeman_enable_write_ex (code, G_STRLOC); \
++	g_assert (code); \
++	} while (0)
++
++#define MINI_END_CODEGEN_EX(buf,size,type,arg) do { \
++	MONO_DISABLE_WARNING(4127) /* conditional expression is constant */ \
++	gint32 __size = (size); \
++	buf = mono_codeman_disable_write_ex (buf, G_STRLOC); \
++	mono_arch_flush_icache ((buf), __size); \
++	if ((int)type != -1) \
++		MONO_PROFILER_RAISE (jit_code_buffer, ((buf), __size, (MonoProfilerCodeBufferType)(type), (arg))); \
++	MONO_RESTORE_WARNING \
++	} while (0)
++
++#if defined(HOST_LIBNX) && !HOST_LIBNX
++#pragma error "Libnx definitions are misconfigured"
++#endif
++
++#if !HOST_LIBNX
+ #define MINI_BEGIN_CODEGEN() do { \
+-	mono_codeman_enable_write (); \
++	mono_codeman_enable_write (a); \
+ 	} while (0)
+ 
+ #define MINI_END_CODEGEN(buf,size,type,arg) do { \
+@@ -723,6 +744,7 @@ void mini_register_sigterm_handler (void);
+ 		MONO_PROFILER_RAISE (jit_code_buffer, ((buf), (size), (MonoProfilerCodeBufferType)(type), (arg))); \
+ 	MONO_RESTORE_WARNING \
+ 	} while (0)
++#endif
+ 
+ typedef void (*MonoRuntimeInitCallback) (void);
+ 
+diff --git a/src/mono/mono/mini/mini.c b/src/mono/mono/mini/mini.c
+index 6c8bb702b..1ef0fa7b3 100644
+--- a/src/mono/mono/mini/mini.c
++++ b/src/mono/mono/mini/mini.c
+@@ -2140,7 +2140,7 @@ mono_codegen (MonoCompile *cfg)
+ 		code = (guint8 *)mono_mem_manager_code_reserve (code_mem_manager, cfg->code_size + cfg->thunk_area + unwindlen);
+ 	}
+ 
+-	mono_codeman_enable_write ();
++	code = mono_codeman_enable_write_ex (code, G_STRLOC);
+ 
+ 	if (cfg->thunk_area) {
+ 		cfg->thunks_offset = cfg->code_size + unwindlen;
+@@ -2223,7 +2223,7 @@ mono_codegen (MonoCompile *cfg)
+ 		mono_mem_manager_code_commit (code_mem_manager, cfg->native_code, cfg->code_size, cfg->code_len);
+ 	}
+ 
+-	mono_codeman_disable_write ();
++	cfg->native_code = mono_codeman_disable_write_ex (cfg->native_code, G_STRLOC);
+ 
+ 	MONO_PROFILER_RAISE (jit_code_buffer, (cfg->native_code, cfg->code_len, MONO_PROFILER_CODE_BUFFER_METHOD, cfg->method));
+ 
+diff --git a/src/mono/mono/mini/mini.h b/src/mono/mono/mini/mini.h
+index 65b38b751..53c90187b 100644
+--- a/src/mono/mono/mini/mini.h
++++ b/src/mono/mono/mini/mini.h
+@@ -2322,6 +2322,8 @@ void*             mono_global_codeman_reserve (int size);
+ 
+ #define mono_global_codeman_reserve(size) (g_cast (mono_global_codeman_reserve ((size))))
+ 
++MonoCodeManager* mono_global_codeman_get(void);
++
+ void              mono_global_codeman_foreach (MonoCodeManagerFunc func, void *user_data);
+ const char       *mono_regname_full (int reg, int bank);
+ gint32*           mono_allocate_stack_slots (MonoCompile *cfg, gboolean backward, guint32 *stack_size, guint32 *stack_align);
+diff --git a/src/mono/mono/mini/tramp-arm64-gsharedvt.c b/src/mono/mono/mini/tramp-arm64-gsharedvt.c
+index f7942c8eb..cf40d769c 100644
+--- a/src/mono/mono/mini/tramp-arm64-gsharedvt.c
++++ b/src/mono/mono/mini/tramp-arm64-gsharedvt.c
+@@ -35,9 +35,10 @@ mono_arch_get_gsharedvt_arg_trampoline (gpointer arg, gpointer addr)
+ 	 * Return a trampoline which calls ADDR passing in ARG.
+ 	 * Pass the argument in ip1, clobbering ip0.
+ 	 */
+-	buf = code = mono_global_codeman_reserve (buf_len);
++	code = mono_global_codeman_reserve (buf_len);
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (code);
++	buf = code;
+ 
+ 	code = mono_arm_emit_imm64 (code, ARMREG_IP1, (guint64)arg);
+ 	code = mono_arm_emit_imm64 (code, ARMREG_IP0, (guint64)addr);
+@@ -46,7 +47,7 @@ mono_arch_get_gsharedvt_arg_trampoline (gpointer arg, gpointer addr)
+ 
+ 	g_assert ((code - buf) < buf_len);
+ 
+-	MINI_END_CODEGEN (buf, GPTRDIFF_TO_INT (code - buf), -1, NULL);
++	MINI_END_CODEGEN_EX (buf, GPTRDIFF_TO_INT (code - buf), -1, NULL);
+ 
+ 	return buf;
+ }
+@@ -228,7 +229,7 @@ mono_arch_get_gsharedvt_trampoline (MonoTrampInfo **info, gboolean aot)
+ 	int br_ret_index, bcc_ret_index;
+ 
+ 	buf_len = 2048;
+-	buf = code = mono_global_codeman_reserve (buf_len);
++	code = mono_global_codeman_reserve (buf_len);
+ 
+ 	/*
+ 	 * We are being called by an gsharedvt arg trampoline, the info argument is in IP1.
+@@ -258,7 +259,8 @@ mono_arch_get_gsharedvt_trampoline (MonoTrampInfo **info, gboolean aot)
+ 
+ 	cfa_offset = offset;
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (code);
++	buf = code;
+ 
+ 	/* Setup frame */
+ 	arm_stpx_pre (code, ARMREG_FP, ARMREG_LR, ARMREG_SP, -cfa_offset);
+@@ -556,10 +558,11 @@ mono_arch_get_gsharedvt_trampoline (MonoTrampInfo **info, gboolean aot)
+ 
+ 	g_assert ((code - buf) < buf_len);
+ 
+-	if (info)
+-		*info = mono_tramp_info_create ("gsharedvt_trampoline", buf, GPTRDIFF_TO_UINT32 (code - buf), ji, unwind_ops);
++	gint32 size = GPTRDIFF_TO_INT (code - buf);
++	MINI_END_CODEGEN_EX(buf, size, -1, NULL);
+ 
+-	MINI_END_CODEGEN (buf, GPTRDIFF_TO_INT (code - buf), -1, NULL);
++	if (info)
++		*info = mono_tramp_info_create ("gsharedvt_trampoline", buf, size, ji, unwind_ops);
+ 
+ 	return buf;
+ }
+diff --git a/src/mono/mono/mini/tramp-arm64.c b/src/mono/mono/mini/tramp-arm64.c
+index f4869988e..b2398368c 100644
+--- a/src/mono/mono/mini/tramp-arm64.c
++++ b/src/mono/mono/mini/tramp-arm64.c
+@@ -33,9 +33,10 @@
+ void
+ mono_arch_patch_callsite (guint8 *method_start, guint8 *code_ptr, guint8 *addr)
+ {
+-	MINI_BEGIN_CODEGEN ();
+-	mono_arm_patch (code_ptr - 4, addr, MONO_R_ARM64_BL);
+-	MINI_END_CODEGEN (code_ptr - 4, 4, -1, NULL);
++	code_ptr -= 4;
++	MINI_BEGIN_CODEGEN_EX (code_ptr);
++	mono_arm_patch (code_ptr, addr, MONO_R_ARM64_BL);
++	MINI_END_CODEGEN_EX (code_ptr, 4, -1, NULL);
+ }
+ 
+ void
+@@ -76,10 +77,10 @@ mono_arch_patch_plt_entry (guint8 *code, gpointer *got, host_mgreg_t *regs, guin
+ void
+ mono_arch_patch_jump_trampoline (guint8 *jump_tramp, guint8 *addr)
+ {
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (jump_tramp);
+ 	guint8 *patch_addr = jump_tramp + JUMP_TRAMP_PATCH_OFFSET;
+ 	*(gpointer*)patch_addr = addr;
+-	MINI_END_CODEGEN (patch_addr, 8, -1, NULL);
++	MINI_END_CODEGEN_EX (patch_addr, 8, -1, NULL);
+ }
+ 
+ guint8*
+@@ -115,7 +116,7 @@ mono_arch_create_generic_trampoline (MonoTrampolineType tramp_type, MonoTrampInf
+ 	const char *tramp_name;
+ 
+ 	buf_len = 768;
+-	buf = code = mono_global_codeman_reserve (buf_len);
++	code = mono_global_codeman_reserve (buf_len);
+ 
+ 	/*
+ 	 * We are getting called by a specific trampoline, ip1 contains the trampoline argument.
+@@ -145,7 +146,9 @@ mono_arch_create_generic_trampoline (MonoTrampolineType tramp_type, MonoTrampInf
+ 	//offset += 22 * 8;
+ 	frame_size = ALIGN_TO (offset, MONO_ARCH_FRAME_ALIGNMENT);
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (code);
++
++	buf = code;
+ 
+ 	/* Setup stack frame */
+ 	imm = frame_size;
+@@ -333,11 +336,12 @@ mono_arch_create_generic_trampoline (MonoTrampolineType tramp_type, MonoTrampInf
+ 
+ 	g_assert ((code - buf) < buf_len);
+ 
+-	MINI_END_CODEGEN (buf, GPTRDIFF_TO_INT (code - buf), MONO_PROFILER_CODE_BUFFER_HELPER, NULL);
++	guint32 code_size = GPTRDIFF_TO_INT (code - buf);
++	MINI_END_CODEGEN_EX (buf, code_size, MONO_PROFILER_CODE_BUFFER_HELPER, NULL);
+ 
+ 	if (info) {
+ 		tramp_name = mono_get_generic_trampoline_name (tramp_type);
+-		*info = mono_tramp_info_create (tramp_name, buf, GPTRDIFF_TO_UINT32 (code - buf), ji, unwind_ops);
++		*info = mono_tramp_info_create (tramp_name, buf, code_size, ji, unwind_ops);
+ 	}
+ 
+ 	return (guchar*)MINI_ADDR_TO_FTNPTR (buf);
+@@ -355,9 +359,11 @@ mono_arch_create_specific_trampoline (gpointer arg1, MonoTrampolineType tramp_ty
+ 	 */
+ 	tramp = mono_get_trampoline_code (tramp_type);
+ 
+-	buf = code = mono_mem_manager_code_reserve (mem_manager, buf_len);
++	code = mono_mem_manager_code_reserve (mem_manager, buf_len);
++
++	MINI_BEGIN_CODEGEN_EX (code);
+ 
+-	MINI_BEGIN_CODEGEN ();
++	buf = code;
+ 
+ 	if (tramp_type == MONO_TRAMPOLINE_JUMP) {
+ 		/* Create a patchable trampoline by emitting the address at the end */
+@@ -381,11 +387,11 @@ mono_arch_create_specific_trampoline (gpointer arg1, MonoTrampolineType tramp_ty
+ 
+ 	g_assert ((code - buf) < buf_len);
+ 
+-	MINI_END_CODEGEN (buf, GPTRDIFF_TO_INT (code - buf), MONO_PROFILER_CODE_BUFFER_SPECIFIC_TRAMPOLINE, mono_get_generic_trampoline_simple_name (tramp_type));
+-
+ 	if (code_len)
+ 		*code_len = GPTRDIFF_TO_UINT32 (code - buf);
+-
++		
++	MINI_END_CODEGEN_EX (buf, GPTRDIFF_TO_INT (code - buf), MONO_PROFILER_CODE_BUFFER_SPECIFIC_TRAMPOLINE, mono_get_generic_trampoline_simple_name (tramp_type));
++	
+ 	return (gpointer)MINI_ADDR_TO_FTNPTR (buf);
+ }
+ 
+@@ -396,10 +402,12 @@ mono_arch_get_unbox_trampoline (MonoMethod *m, gpointer addr)
+ 	guint32 size = 32;
+ 	MonoMemoryManager *mem_manager = m_method_get_mem_manager (m);
+ 
+-	start = code = mono_mem_manager_code_reserve (mem_manager, size);
++	code = mono_mem_manager_code_reserve (mem_manager, size);
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (code);
+ 
++	start = code;
++	
+ 	// FIXME: Maybe make a normal non-ptrauth call ?
+ 
+ 	code = mono_arm_emit_imm64 (code, ARMREG_IP0, (guint64)addr);
+@@ -408,7 +416,7 @@ mono_arch_get_unbox_trampoline (MonoMethod *m, gpointer addr)
+ 
+ 	g_assert ((code - start) <= size);
+ 
+-	MINI_END_CODEGEN (start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_UNBOX_TRAMPOLINE, m);
++	MINI_END_CODEGEN_EX (start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_UNBOX_TRAMPOLINE, m);
+ 
+ 	return (gpointer)MINI_ADDR_TO_FTNPTR (start);
+ }
+@@ -419,17 +427,19 @@ mono_arch_get_static_rgctx_trampoline (MonoMemoryManager *mem_manager, gpointer
+ 	guint8 *code, *start;
+ 	guint32 buf_len = 32;
+ 
+-	start = code = mono_mem_manager_code_reserve (mem_manager, buf_len);
++	code = mono_mem_manager_code_reserve (mem_manager, buf_len);
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (code);
++
++	start = code;
+ 
+ 	code = mono_arm_emit_imm64 (code, MONO_ARCH_RGCTX_REG, (guint64)arg);
+ 	code = mono_arm_emit_imm64 (code, ARMREG_IP0, (guint64)addr);
+ 	code = mono_arm_emit_brx (code, ARMREG_IP0);
+ 
+-	MINI_END_CODEGEN (start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_GENERICS_TRAMPOLINE, NULL);
+-
+ 	g_assert ((code - start) <= buf_len);
++	
++	MINI_END_CODEGEN_EX (start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_GENERICS_TRAMPOLINE, NULL);
+ 
+ 	return (gpointer)MINI_ADDR_TO_FTNPTR (start);
+ }
+@@ -460,7 +470,7 @@ mono_arch_create_rgctx_lazy_fetch_trampoline (guint32 slot, MonoTrampInfo **info
+ 	}
+ 
+ 	buf_size = 64 + 16 * depth;
+-	code = buf = mono_global_codeman_reserve (buf_size);
++	code = mono_global_codeman_reserve (buf_size);
+ 
+ 	rgctx_null_jumps = g_malloc0 (sizeof (guint8*) * (depth + 2));
+ 	njumps = 0;
+@@ -468,7 +478,9 @@ mono_arch_create_rgctx_lazy_fetch_trampoline (guint32 slot, MonoTrampInfo **info
+ 	/* The vtable/mrgtx is in R0 */
+ 	g_assert (MONO_ARCH_VTABLE_REG == ARMREG_R0);
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX(code);
++	
++	buf = code;
+ 
+ 	if (is_mrgctx) {
+ 		/* get mrgctx ptr */
+@@ -526,11 +538,13 @@ mono_arch_create_rgctx_lazy_fetch_trampoline (guint32 slot, MonoTrampInfo **info
+ 
+ 	g_assert (code - buf <= buf_size);
+ 
+-	MINI_END_CODEGEN (buf, GPTRDIFF_TO_INT (code - buf), MONO_PROFILER_CODE_BUFFER_GENERICS_TRAMPOLINE, NULL);
++	gint32 size = GPTRDIFF_TO_INT (code - buf);
++
++	MINI_END_CODEGEN_EX (buf, size, MONO_PROFILER_CODE_BUFFER_GENERICS_TRAMPOLINE, NULL);
+ 
+ 	if (info) {
+ 		char *name = mono_get_rgctx_fetch_trampoline_name (slot);
+-		*info = mono_tramp_info_create (name, buf, GPTRDIFF_TO_UINT32 (code - buf), ji, unwind_ops);
++		*info = mono_tramp_info_create (name, buf, size, ji, unwind_ops);
+ 		g_free (name);
+ 	}
+ 
+@@ -549,12 +563,13 @@ mono_arch_create_general_rgctx_lazy_fetch_trampoline (MonoTrampInfo **info, gboo
+ 
+ 	tramp_size = 32;
+ 
+-	code = buf = mono_global_codeman_reserve (tramp_size);
++	code = mono_global_codeman_reserve (tramp_size);
++	MINI_BEGIN_CODEGEN_EX (code);
++	
++	buf = code;
+ 
+ 	mono_add_unwind_op_def_cfa (unwind_ops, code, buf, ARMREG_SP, 0);
+ 
+-	MINI_BEGIN_CODEGEN ();
+-
+ 	// FIXME: Currently, we always go to the slow path.
+ 	/* Load trampoline addr */
+ 	arm_ldrx (code, ARMREG_IP0, MONO_ARCH_RGCTX_REG, 8);
+@@ -564,10 +579,11 @@ mono_arch_create_general_rgctx_lazy_fetch_trampoline (MonoTrampInfo **info, gboo
+ 
+ 	g_assert (code - buf <= tramp_size);
+ 
+-	MINI_END_CODEGEN (buf, GPTRDIFF_TO_INT (code - buf), MONO_PROFILER_CODE_BUFFER_GENERICS_TRAMPOLINE, NULL);
++	gint32 size = GPTRDIFF_TO_INT (code - buf);
++	MINI_END_CODEGEN_EX (buf, size, MONO_PROFILER_CODE_BUFFER_GENERICS_TRAMPOLINE, NULL);
+ 
+ 	if (info)
+-		*info = mono_tramp_info_create ("rgctx_fetch_trampoline_general", buf, GPTRDIFF_TO_UINT32 (code - buf), ji, unwind_ops);
++		*info = mono_tramp_info_create ("rgctx_fetch_trampoline_general", buf, size, ji, unwind_ops);
+ 
+ 	return (gpointer)MINI_ADDR_TO_FTNPTR (buf);
+ }
+@@ -589,7 +605,7 @@ mono_arch_create_sdb_trampoline (gboolean single_step, MonoTrampInfo **info, gbo
+ 	GSList *unwind_ops = NULL;
+ 	MonoJumpInfo *ji = NULL;
+ 
+-	code = buf = mono_global_codeman_reserve (tramp_size);
++	code = mono_global_codeman_reserve (tramp_size);
+ 
+ 	/* Compute stack frame size and offsets */
+ 	offset = 0;
+@@ -603,7 +619,8 @@ mono_arch_create_sdb_trampoline (gboolean single_step, MonoTrampInfo **info, gbo
+ 
+ 	// FIXME: Unwind info
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (code);
++	buf = code;
+ 
+ 	/* Setup stack frame */
+ 	imm = frame_size;
+@@ -665,10 +682,11 @@ mono_arch_create_sdb_trampoline (gboolean single_step, MonoTrampInfo **info, gbo
+ 
+ 	g_assert (code - buf <= tramp_size);
+ 
+-	MINI_END_CODEGEN (buf, GPTRDIFF_TO_INT (code - buf), MONO_PROFILER_CODE_BUFFER_HELPER, NULL);
++	gint32 size = GPTRDIFF_TO_INT (code - buf);
++	MINI_END_CODEGEN_EX (buf, size, MONO_PROFILER_CODE_BUFFER_HELPER, NULL);
+ 
+ 	const char *tramp_name = single_step ? "sdb_single_step_trampoline" : "sdb_breakpoint_trampoline";
+-	*info = mono_tramp_info_create (tramp_name, buf, GPTRDIFF_TO_UINT32 (code - buf), ji, unwind_ops);
++	*info = mono_tramp_info_create (tramp_name, buf, size, ji, unwind_ops);
+ 
+ 	return (guint8*)MINI_ADDR_TO_FTNPTR (buf);
+ }
+@@ -689,7 +707,7 @@ mono_arch_get_interp_to_native_trampoline (MonoTrampInfo **info)
+ 	int buf_len, i, framesize = 0, off_methodargs, off_targetaddr;
+ 
+ 	buf_len = 512 + 1024;
+-	start = code = (guint8 *) mono_global_codeman_reserve (buf_len);
++	code = (guint8 *) mono_global_codeman_reserve (buf_len);
+ 
+ 	/* allocate frame */
+ 	framesize += 2 * sizeof (host_mgreg_t);
+@@ -707,7 +725,8 @@ mono_arch_get_interp_to_native_trampoline (MonoTrampInfo **info)
+ 
+ 	framesize = ALIGN_TO (framesize, MONO_ARCH_FRAME_ALIGNMENT);
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (code);
++	start = code;
+ 
+ 	arm_subx_imm (code, ARMREG_SP, ARMREG_SP, framesize);
+ 	arm_stpx (code, ARMREG_FP, ARMREG_LR, ARMREG_SP, 0);
+@@ -793,10 +812,11 @@ mono_arch_get_interp_to_native_trampoline (MonoTrampInfo **info)
+ 
+ 	g_assert (code - start < buf_len);
+ 
+-	MINI_END_CODEGEN (start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_HELPER, NULL);
++	gint32 size = GPTRDIFF_TO_INT (code - start);
++	MINI_END_CODEGEN_EX (start, size, MONO_PROFILER_CODE_BUFFER_HELPER, NULL);
+ 
+ 	if (info)
+-		*info = mono_tramp_info_create ("interp_to_native_trampoline", start, GPTRDIFF_TO_UINT32 (code - start), ji, unwind_ops);
++		*info = mono_tramp_info_create ("interp_to_native_trampoline", start, size, ji, unwind_ops);
+ 
+ 	return (guint8*)MINI_ADDR_TO_FTNPTR (start);
+ #else
+@@ -816,7 +836,7 @@ mono_arch_get_native_to_interp_trampoline (MonoTrampInfo **info)
+ 	int framesize, offset, ccontext_offset;
+ 
+ 	buf_len = 512;
+-	start = code = (guint8 *) mono_global_codeman_reserve (buf_len);
++	code = (guint8 *) mono_global_codeman_reserve (buf_len);
+ 
+ 	/* Allocate frame (FP + LR + CallContext) */
+ 	offset = 2 * sizeof (host_mgreg_t);
+@@ -824,7 +844,8 @@ mono_arch_get_native_to_interp_trampoline (MonoTrampInfo **info)
+ 	offset += sizeof (CallContext);
+ 	framesize = ALIGN_TO (offset, MONO_ARCH_FRAME_ALIGNMENT);
+ 
+-	MINI_BEGIN_CODEGEN ();
++	MINI_BEGIN_CODEGEN_EX (code);
++	start = code;
+ 
+ 	mono_add_unwind_op_def_cfa (unwind_ops, code, start, ARMREG_SP, 0);
+ 
+@@ -882,10 +903,11 @@ mono_arch_get_native_to_interp_trampoline (MonoTrampInfo **info)
+ 
+ 	g_assert (code - start < buf_len);
+ 
+-	MINI_END_CODEGEN (start, GPTRDIFF_TO_INT (code - start), MONO_PROFILER_CODE_BUFFER_EXCEPTION_HANDLING, NULL);
++	gint32 size = GPTRDIFF_TO_INT (code - start);
++	MINI_END_CODEGEN_EX (start, size, MONO_PROFILER_CODE_BUFFER_EXCEPTION_HANDLING, NULL);
+ 
+ 	if (info)
+-		*info = mono_tramp_info_create ("native_to_interp_trampoline", start, GPTRDIFF_TO_UINT32 (code - start), ji, unwind_ops);
++		*info = mono_tramp_info_create ("native_to_interp_trampoline", start, size, ji, unwind_ops);
+ 
+ 	return (guint8*)MINI_ADDR_TO_FTNPTR (start);
+ #else
+diff --git a/src/mono/mono/offsets/offsets-tool.py b/src/mono/mono/offsets/offsets-tool.py
+index 05fe89fc6..f79fe2905 100644
+--- a/src/mono/mono/offsets/offsets-tool.py
++++ b/src/mono/mono/offsets/offsets-tool.py
+@@ -12,6 +12,7 @@ IOS_DEFINES = ["HOST_DARWIN", "TARGET_MACH", "MONO_CROSS_COMPILE", "USE_MONO_CTX
+ ANDROID_DEFINES = ["HOST_ANDROID", "MONO_CROSS_COMPILE", "USE_MONO_CTX", "BIONIC_IOCTL_NO_SIGNEDNESS_OVERLOAD"]
+ LINUX_DEFINES = ["HOST_LINUX", "MONO_CROSS_COMPILE", "USE_MONO_CTX"]
+ WASI_DEFINES = ["_WASI_EMULATED_PROCESS_CLOCKS", "_WASI_EMULATED_SIGNAL", "_WASI_EMULATED_MMAN"]
++LIBNX_DEFINES = ["HOST_LIBNX", "LIBNX_DEFINES", "MONO_CROSS_COMPILE", "USE_MONO_CTX"]
+ 
+ class Target:
+ 	def __init__(self, arch, platform, others):
+@@ -127,6 +128,15 @@ class OffsetsTool:
+ 				self.target = Target ("TARGET_WASM", None, [])
+ 				self.target_args += ["-target", args.abi]
+ 
++		elif args.abi == "aarch64-none-elf" and "libnx" in args.target_path:
++			require_sysroot(args)
++			self.target = Target ("TARGET_ARM64", "TARGET_LIBNX", LIBNX_DEFINES)
++			self.sys_includes = [ args.sysroot + "/devkitA64/lib/gcc/aarch64-none-elf/14.2.0/include", args.sysroot + "/devkitA64/lib/gcc/aarch64-none-elf/15.1.0/include"]
++			self.target_args += ["-target", "arm64"]
++			self.target_args += ["-isysroot", args.sysroot]
++			self.target_args += ["-isystem", args.sysroot + "/devkitA64/aarch64-none-elf/include/"]
++			self.target_args += ["-D__DEVKITA64__"]
++
+ 		# Linux
+ 		elif "arm-linux-gnueabihf" == args.abi:
+ 			require_sysroot (args)
+diff --git a/src/mono/mono/profiler/helper.c b/src/mono/mono/profiler/helper.c
+index 05fc31b67..1a46dfc4e 100644
+--- a/src/mono/mono/profiler/helper.c
++++ b/src/mono/mono/profiler/helper.c
+@@ -28,6 +28,9 @@
+ #include <winsock2.h>
+ #include <ws2tcpip.h>
+ #endif
++#ifdef HOST_LIBNX
++#include <arpa/inet.h>
++#endif
+ 
+ #include "helper.h"
+ 
+diff --git a/src/mono/mono/sgen/sgen-los.c b/src/mono/mono/sgen/sgen-los.c
+index e72f5d421..30d49f376 100644
+--- a/src/mono/mono/sgen/sgen-los.c
++++ b/src/mono/mono/sgen/sgen-los.c
+@@ -25,6 +25,10 @@
+ 
+ #include <string.h>
+ 
++#ifdef HOST_LIBNX
++#include <switch/types.h>
++#endif
++
+ #include "mono/sgen/sgen-gc.h"
+ #include "mono/sgen/sgen-protocol.h"
+ #include "mono/sgen/sgen-cardtable.h"
+diff --git a/src/mono/mono/utils/CMakeLists.txt b/src/mono/mono/utils/CMakeLists.txt
+index 8c124a1aa..8978d2b74 100644
+--- a/src/mono/mono/utils/CMakeLists.txt
++++ b/src/mono/mono/utils/CMakeLists.txt
+@@ -32,6 +32,8 @@ if(HOST_WIN32)
+     set(utils_platform_sources ${utils_win32_sources})
+ elseif(HOST_WASM)
+     set(utils_platform_sources ${utils_unix_sources} mono-threads-wasm.S)
++elseif(HOST_LIBNX)
++    set(utils_platform_sources ${utils_unix_sources} mono-codeman-libnx.c)
+ else()
+     set(utils_platform_sources ${utils_unix_sources})
+ endif()
+@@ -52,6 +54,7 @@ set(utils_common_sources
+     mono-dl.h
+     mono-dl-windows-internals.h
+     mono-log-windows.c
++    mono-log-libnx.c
+     mono-log-common.c
+     mono-log-posix.c
+     mono-log-android.c
+@@ -64,6 +67,7 @@ set(utils_common_sources
+     mono-math-c.c
+     mono-mmap.c
+     mono-mmap-windows.c
++    mono-mmap-libnx.c
+     mono-mmap.h
+     mono-mmap-internals.h
+     mono-os-mutex.h
+@@ -122,6 +126,7 @@ set(utils_common_sources
+     mono-threads-mach-helper.c
+     mono-threads-windows.c
+     mono-threads-linux.c
++    mono-threads-libnx.c
+     mono-threads-freebsd.c
+     mono-threads-netbsd.c
+     mono-threads-openbsd.c
+diff --git a/src/mono/mono/utils/dlmalloc.c b/src/mono/mono/utils/dlmalloc.c
+index 53fbd2adf..741bf4e12 100644
+--- a/src/mono/mono/utils/dlmalloc.c
++++ b/src/mono/mono/utils/dlmalloc.c
+@@ -1154,6 +1154,10 @@ int mspace_mallopt(int, int);
+ 
+ /*------------------------------ internal #includes ---------------------- */
+ 
++#if HOST_LIBNX
++#define HAVE_MMAP 0
++#endif
++
+ #ifdef _MSC_VER
+ #pragma warning( disable : 4146 ) /* no "unsigned" warnings */
+ #endif /* WIN32 */
+diff --git a/src/mono/mono/utils/mono-codeman-libnx.c b/src/mono/mono/utils/mono-codeman-libnx.c
+new file mode 100644
+index 000000000..fd7ea633f
+--- /dev/null
++++ b/src/mono/mono/utils/mono-codeman-libnx.c
+@@ -0,0 +1,167 @@
++#include "config.h"
++#include <stdlib.h>
++#include <string.h>
++#include <assert.h>
++#include <glib.h>
++#include <mono/utils/mono-os-mutex.h>
++#include <mono/utils/mono-tls.h>
++
++#include "mono-logger-internals.h"
++
++#include "mono-codeman-libnx.h"
++
++static mono_mutex_t g_jit_list_mutex;
++static JitAreaNode* g_jit_list = NULL;
++
++JitAreaNode* nx_jit_new(size_t size)
++{
++	Jit native;
++	
++	Result rc = jitCreate(&native, size);
++	if (R_FAILED(rc))
++	{
++		mono_trace_error(MONO_TRACE_DIAGNOSTICS, "jitCreate failed %x size=%lx", rc, size);
++		return NULL;
++	}
++
++	// JitType_CodeMemory is special. While switch is R^X, when using a CodeMemory object we can have two different views of the memory, one is writeable and the other is executable, at the same time.
++	// In fact, regardless of what the jit API looks like, we can write and execute to this memory without calling the switch to writeable/executable functions.
++	// THe only downside is that we need to propagate the concept of the two views to the client.
++	if (native.type != JitType_CodeMemory)
++	{
++		jitClose(&native);
++		mono_trace_error(MONO_TRACE_DIAGNOSTICS, "jitCreate failed, only JitType_CodeMemory is supported. Type was %d", native.type);
++		return NULL;
++	}	
++
++	JitAreaNode* area = g_new0 (JitAreaNode, 1);
++	area->nativeJit = native;
++	area->next = NULL;
++
++	mono_os_mutex_lock(&g_jit_list_mutex);
++	area->next = g_jit_list;
++	g_jit_list = area;
++	mono_os_mutex_unlock(&g_jit_list_mutex);
++	
++	mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_DIAGNOSTICS, "Cretaed JIT area %p req=%lx size=%lx rw=%p rx=%p", area, size, native.size, native.rw_addr, native.rx_addr);
++
++	return area;	
++}
++
++static void nxlogf(const char* format, ...)
++{
++	char buffer[512];
++	va_list args;
++	va_start(args, format);
++	vsnprintf(buffer, sizeof(buffer), format, args);
++	va_end(args);
++
++	svcOutputDebugString(buffer, strlen(buffer));
++}
++
++static void nx_jit_free_internal(JitAreaNode* node, bool useMonoTracing)
++{
++	if (g_jit_list == node)
++		g_jit_list = node->next;
++	else
++	{
++		JitAreaNode* prev = g_jit_list;
++		while (prev && prev->next != node)
++			prev = prev->next;
++		
++		if (prev)
++			prev->next = node->next;
++	}
++
++	if (useMonoTracing)
++		mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_DIAGNOSTICS, "Freeing JIT area %p size=%lx rw=%p rx=%p", node, node->nativeJit.size, node->nativeJit.rw_addr, node->nativeJit.rx_addr);
++	else
++		nxlogf("Freeing JIT area %p size=%lx rw=%p rx=%p", node, node->nativeJit.size, node->nativeJit.rw_addr, node->nativeJit.rx_addr);
++	
++	jitClose(&node->nativeJit);
++	g_free(node);
++}
++
++void nx_jit_free(JitAreaNode* node)
++{
++	if (!node)
++		return;
++
++	mono_os_mutex_lock(&g_jit_list_mutex);
++	nx_jit_free_internal(node, true);
++	mono_os_mutex_unlock(&g_jit_list_mutex);
++}
++
++JitAreaNode* nx_jit_find_area(void* address, JIT_AREA_LOOKUP type, ptrdiff_t* offset)
++{
++	JitAreaNode* node = NULL;
++	mono_os_mutex_lock(&g_jit_list_mutex);	
++
++	for (node = g_jit_list; node; node = node->next)
++	{
++		if (type == JIT_AREA_LOOKUP_BY_RX || type == JIT_AREA_LOOKUP_ANY) 
++		{
++			intptr_t start = (intptr_t)node->nativeJit.rx_addr;
++			intptr_t end = start + node->nativeJit.size;
++			intptr_t addr = (intptr_t)address;
++
++			if (addr >= start && addr < end)
++			{
++				if (offset) *offset = addr - start;
++				break;			
++			}
++		}
++
++		if (type == JIT_AREA_LOOKUP_BY_RW || type == JIT_AREA_LOOKUP_ANY) 
++		{
++			intptr_t start = (intptr_t)node->nativeJit.rw_addr;
++			intptr_t end = start + node->nativeJit.size;
++			intptr_t addr = (intptr_t)address;
++
++			if (addr >= start && addr < end) 
++			{
++				if (offset) *offset = addr - start;
++				break;			
++			}
++		}
++	}
++
++	mono_os_mutex_unlock(&g_jit_list_mutex);
++	return node;
++}
++
++void nx_jit_flush_cache(JitAreaNode* node)
++{
++	// First, flush the write cache for the writeable view
++	armDCacheFlush(node->nativeJit.rw_addr, node->nativeJit.size);
++	// Then, flush the instruction cache for the executable view
++    armDCacheFlush(node->nativeJit.rx_addr, node->nativeJit.size);
++}
++
++void nx_jit_flush_cache_by_address(void* address)
++{
++	JitAreaNode* node = nx_jit_find_area(address, JIT_AREA_LOOKUP_ANY, NULL);
++	if (!node)
++	{
++		mono_trace_error(MONO_TRACE_DIAGNOSTICS, "nx_jit_flush_cache_by_address: node not found for address %p", address);
++		return;
++	}
++
++	nx_jit_flush_cache(node);
++}
++
++// This function might be called from the embedder when closing the runtime.
++// This can also happen after mono_jit_cleanup, so we need to be careful not to call any mono functions here.
++void nx_jit_force_dispose(void) 
++{
++	nxlogf("nx_jit_force_dispose enter");
++
++	while (g_jit_list)
++	{
++		nxlogf("nx_jit_force_dispose loop");
++		JitAreaNode* node = g_jit_list;
++		nx_jit_free_internal(node, false);
++	}
++
++	nxlogf("nx_jit_force_dispose finished");
++}
+\ No newline at end of file
+diff --git a/src/mono/mono/utils/mono-codeman-libnx.h b/src/mono/mono/utils/mono-codeman-libnx.h
+new file mode 100644
+index 000000000..5778381c1
+--- /dev/null
++++ b/src/mono/mono/utils/mono-codeman-libnx.h
+@@ -0,0 +1,29 @@
++#ifndef __MONO_CODEMAN_LIBNX_H__
++#define __MONO_CODEMAN_LIBNX_H__
++
++#include <mono/utils/mono-publib.h>
++#include <switch.h>
++
++typedef struct _JitAreaNode {
++	struct _JitAreaNode* next;
++	
++	// By convention, the main address is the RX address
++	Jit nativeJit;
++} JitAreaNode;
++
++JitAreaNode* nx_jit_new(size_t size);
++void nx_jit_free(JitAreaNode* node);
++
++typedef enum {
++	JIT_AREA_LOOKUP_BY_RX,
++	JIT_AREA_LOOKUP_BY_RW,
++	JIT_AREA_LOOKUP_ANY, // best not to use this to avoid confusion
++} JIT_AREA_LOOKUP;
++
++JitAreaNode* nx_jit_find_area(void* address, JIT_AREA_LOOKUP type, ptrdiff_t* offset);
++
++void nx_jit_flush_cache(JitAreaNode* node);
++void nx_jit_flush_cache_by_address(void* address);
++
++#endif /* __MONO_CODEMAN_LIBNX_H__ */
++
+diff --git a/src/mono/mono/utils/mono-codeman.c b/src/mono/mono/utils/mono-codeman.c
+index 26f8715c6..fe9b825cf 100644
+--- a/src/mono/mono/utils/mono-codeman.c
++++ b/src/mono/mono/utils/mono-codeman.c
+@@ -29,6 +29,14 @@ static void* mono_code_manager_heap;
+ #include <mono/utils/mono-os-mutex.h>
+ #include <mono/utils/mono-tls.h>
+ 
++#include "mono-logger-internals.h"
++
++#if HOST_LIBNX
++#include "mono-codeman-libnx.h"
++#endif
++
++#include "../mini/mini-runtime.h"
++
+ static uintptr_t code_memory_used = 0;
+ static size_t dynamic_code_alloc_count;
+ static size_t dynamic_code_bytes_count;
+@@ -79,8 +87,67 @@ enum {
+ 	CODE_FLAG_MALLOC
+ };
+ 
+-struct _CodeChunk {
++struct _CodeChunkArea
++{
++	// When this is plain malloc, this is a normal pointer
++	// However, on libnx this is NULL when it's a JIT area and the effective address is in jitHandle
++	// On code shared between all platforms use the codearea_* functions.
++	// On non-libnx platforms .data has no special meaning and it's the raw address of the memory
+ 	char *data;
++	#if HOST_LIBNX
++	JitAreaNode* jitHandle;
++	#endif
++};
++
++static inline bool codearea_is_plain(const struct _CodeChunkArea* code)
++{
++	#if HOST_LIBNX
++	return code->data != NULL;
++	#else
++	return true;
++	#endif
++}
++
++// On platforms where RWX is supported, this returns the addr value
++// On LIBNX this returns the RX address by convention, all codeman functions that take a pointer for JIT purposes assume that's the rx view of the memory area, unless otherwise specified
++static inline void* codearea_addr_exec(const struct _CodeChunkArea* code)
++{
++	#if HOST_LIBNX
++	if (code->jitHandle)
++		return code->jitHandle->nativeJit.rx_addr;
++	#endif
++	return code->data;
++}
++
++static inline void* codearea_addr_write(const struct _CodeChunkArea* code)
++{
++	#if HOST_LIBNX
++	if (code->jitHandle)
++		return code->jitHandle->nativeJit.rw_addr;
++	#endif
++	return code->data;
++}
++
++static inline bool codearea_is_ok(const struct _CodeChunkArea* code)
++{
++	if (!code)
++	{
++		mono_trace_error (MONO_TRACE_SECURITY, "codechunk is NULL. This should never happen.");
++		return false;
++	}
++
++	if (code->data)
++		return true;
++
++#if HOST_LIBNX
++	return code->jitHandle != NULL;
++#endif
++
++	return false;
++}
++
++struct _CodeChunk {
++	struct _CodeChunkArea code;
+ 	CodeChunk *next;
+ 	int pos;
+ 	int size;
+@@ -106,6 +173,21 @@ static mono_mutex_t valloc_mutex;
+ static GHashTable *valloc_freelists;
+ static MonoNativeTlsKey write_level_tls_id;
+ 
++#if HOST_LIBNX
++static void*
++codechunk_valloc (void *preferred, guint32 size, gboolean no_exec)
++{
++	mono_trace_error (MONO_TRACE_SECURITY, "codechunk_valloc called on libnx platform. This is not supported");
++	return 0;
++}
++
++static void
++codechunk_vfree (void *ptr, guint32 size)
++{
++	mono_trace_error (MONO_TRACE_SECURITY, "codechunk_vfree called on libnx platform. This is not supported");
++	// No-op
++}
++#else
+ static void*
+ codechunk_valloc (void *preferred, guint32 size, gboolean no_exec)
+ {
+@@ -158,6 +240,7 @@ codechunk_vfree (void *ptr, guint32 size)
+ 	}
+ 	mono_os_mutex_unlock (&valloc_mutex);
+ }
++#endif
+ 
+ static void
+ codechunk_cleanup (void)
+@@ -226,7 +309,7 @@ static
+ int
+ mono_codeman_allocation_type (MonoCodeManager const *cman)
+ {
+-#ifdef FORCE_MALLOC
++#if defined(FORCE_MALLOC) || HOST_LIBNX
+ 	return CODE_FLAG_MALLOC;
+ #else
+ 	return cman->dynamic ? CODE_FLAG_MALLOC : CODE_FLAG_MMAP;
+@@ -338,33 +421,60 @@ mono_code_manager_new_aot (void)
+ 	return mono_code_manager_new_internal (MONO_CODEMAN_TYPE_AOT);
+ }
+ 
+-static gpointer
+-mono_codeman_malloc (gsize n)
++static struct _CodeChunkArea
++mono_codeman_malloc (gsize n, bool is_executable)
+ {
++	struct _CodeChunkArea res = { 0 };
++
+ #if _WIN32
+ 	void* const heap = mono_code_manager_heap;
+ 	g_assert (heap);
+-	return HeapAlloc (heap, 0, n);
++	res.data = HeapAlloc (heap, 0, n);
++#elif HOST_LIBNX
++	if (is_executable)
++	{
++		res.jitHandle = nx_jit_new (n);
++	}
++	else
++	{
++		// TODO: We are currently ignoring alignment here
++		res.data = malloc(n);
++		if (!res.data)
++			mono_trace_error(MONO_TRACE_DIAGNOSTICS, "aligned_alloc failed size=%lx", n);
++			
++		mono_trace_message(MONO_TRACE_DIAGNOSTICS, "codeman plain alloc size=%lx addr=%p", n, res.data);
++	}
+ #else
+ 	mono_codeman_enable_write ();
+-	gpointer res = dlmemalign (MIN_ALIGN, n);
++	res.data = dlmemalign (MIN_ALIGN, n);
+ 	mono_codeman_disable_write ();
+-	return res;
+ #endif
++	return res;
+ }
+ 
+ static void
+-mono_codeman_free (gpointer p)
++mono_codeman_free (struct _CodeChunkArea* p)
+ {
+-	if (!p)
++	if (!codearea_is_ok(p))
+ 		return;
+ #if _WIN32
+ 	void* const heap = mono_code_manager_heap;
+ 	g_assert (heap);
+-	HeapFree (heap, 0, p);
++	HeapFree (heap, 0, p.data);
++#elif HOST_LIBNX
++	if (p->data)
++	{
++		free (p->data);
++		p->data = NULL;
++	}
++	else
++	{
++		nx_jit_free (p->jitHandle);
++		p->jitHandle = NULL;
++	}
+ #else
+ 	mono_codeman_enable_write ();
+-	dlfree (p);
++	dlfree (p->data);
+ 	mono_codeman_disable_write ();
+ #endif
+ }
+@@ -390,15 +500,16 @@ free_chunklist (MonoCodeManager *cman, CodeChunk *chunk)
+ 
+ 	for (; chunk; ) {
+ 		dead = chunk;
+-		MONO_PROFILER_RAISE (jit_chunk_destroyed, ((mono_byte *) dead->data));
++		void* address = codearea_addr_exec(&dead->code);
++		MONO_PROFILER_RAISE (jit_chunk_destroyed, ((mono_byte *)address));
+ 		if (code_manager_callbacks)
+-			code_manager_callbacks->chunk_destroy (dead->data);
++			code_manager_callbacks->chunk_destroy (address);
+ 		chunk = chunk->next;
+ 		if (flags == CODE_FLAG_MMAP) {
+-			codechunk_vfree (dead->data, dead->size);
++			codechunk_vfree (dead->code.data, dead->size);
+ 			/* valgrind_unregister(dead->data); */
+ 		} else if (flags == CODE_FLAG_MALLOC) {
+-			mono_codeman_free (dead->data);
++			mono_codeman_free (&dead->code);
+ 		}
+ 		code_memory_used -= dead->size;
+ 		g_free (dead);
+@@ -439,9 +550,9 @@ mono_code_manager_invalidate (MonoCodeManager *cman)
+ #endif
+ 
+ 	for (chunk = cman->current; chunk; chunk = chunk->next)
+-		memset (chunk->data, fill_value, chunk->size);
++		memset (codearea_addr_write(&chunk->code), fill_value, chunk->size);
+ 	for (chunk = cman->full; chunk; chunk = chunk->next)
+-		memset (chunk->data, fill_value, chunk->size);
++		memset (codearea_addr_write(&chunk->code), fill_value, chunk->size);
+ }
+ 
+ /**
+@@ -468,11 +579,11 @@ mono_code_manager_foreach (MonoCodeManager *cman, MonoCodeManagerFunc func, void
+ {
+ 	CodeChunk *chunk;
+ 	for (chunk = cman->current; chunk; chunk = chunk->next) {
+-		if (func (chunk->data, chunk->size, chunk->bsize, user_data))
++		if (func (codearea_addr_exec(&chunk->code), chunk->size, chunk->bsize, user_data))
+ 			return;
+ 	}
+ 	for (chunk = cman->full; chunk; chunk = chunk->next) {
+-		if (func (chunk->data, chunk->size, chunk->bsize, user_data))
++		if (func (codearea_addr_exec(&chunk->code), chunk->size, chunk->bsize, user_data))
+ 			return;
+ 	}
+ }
+@@ -497,7 +608,7 @@ new_codechunk (MonoCodeManager *cman, int size)
+ 	int const no_exec = cman->no_exec;
+ 	int chunk_size, bsize = 0;
+ 	CodeChunk *chunk;
+-	void *ptr;
++	struct _CodeChunkArea ptr = { 0 };
+ 
+ 	const int flags = mono_codeman_allocation_type (cman);
+ 	const int pagesize = mono_pagesize ();
+@@ -540,46 +651,56 @@ new_codechunk (MonoCodeManager *cman, int size)
+ #endif
+ 
+ 	if (flags == CODE_FLAG_MALLOC) {
+-		ptr = mono_codeman_malloc (chunk_size + MIN_ALIGN - 1);
+-		if (!ptr)
++		ptr = mono_codeman_malloc (chunk_size + MIN_ALIGN - 1, !no_exec);
++		if (!codearea_is_ok(&ptr))
+ 			return NULL;
+ 	} else {
+ 		/* Try to allocate code chunks next to each other to help the VM */
+-		ptr = NULL;
++		ptr.data = NULL;
+ 		if (last)
+-			ptr = codechunk_valloc ((guint8*)last->data + last->size, chunk_size, no_exec);
+-		if (!ptr)
+-			ptr = codechunk_valloc (NULL, chunk_size, no_exec);
+-		if (!ptr)
++			ptr.data = codechunk_valloc ((guint8*)last->code.data + last->size, chunk_size, no_exec);
++		if (!ptr.data)
++			ptr.data = codechunk_valloc (NULL, chunk_size, no_exec);
++		if (!ptr.data)
+ 			return NULL;
+ 	}
+ 
+ #ifdef BIND_ROOM
+ 	if (flags == CODE_FLAG_MALLOC) {
+ 		/* Make sure the thunks area is zeroed */
++#if !HOST_LIBNX
+ 		mono_codeman_enable_write ();
+-		memset (ptr, 0, bsize);
++		memset (ptr.data, 0, bsize);
+ 		mono_codeman_disable_write ();
++#else		
++		// On libnx, only memset if this is a plain malloc area
++		if (codearea_is_plain(&ptr)) 
++			memset (ptr.data, 0, bsize);
++#endif
+ 	}
+ #endif
+ 
+ 	chunk = (CodeChunk *) g_malloc (sizeof (CodeChunk));
+ 	if (!chunk) {
+ 		if (flags == CODE_FLAG_MALLOC)
+-			mono_codeman_free (ptr);
++			mono_codeman_free (&ptr);
+ 		else
+-			mono_vfree (ptr, chunk_size, MONO_MEM_ACCOUNT_CODE);
++			mono_vfree (ptr.data, chunk_size, MONO_MEM_ACCOUNT_CODE);
+ 		return NULL;
+ 	}
+ 	chunk->next = NULL;
+ 	chunk->size = chunk_size;
+-	chunk->data = (char *) ptr;
++#if HOST_LIBNX
++	if (!codearea_is_plain(&ptr))
++		chunk->size = ptr.jitHandle->nativeJit.size;
++#endif
++	chunk->code = ptr;
+ 	chunk->reserved = 0;
+ 	chunk->pos = bsize;
+ 	chunk->bsize = bsize;
+ 	if (code_manager_callbacks)
+-		code_manager_callbacks->chunk_new (chunk->data, chunk->size);
+-	MONO_PROFILER_RAISE (jit_chunk_created, ((mono_byte *) chunk->data, chunk->size));
++		code_manager_callbacks->chunk_new (codearea_addr_exec(&chunk->code), chunk->size);
++	MONO_PROFILER_RAISE (jit_chunk_created, ((mono_byte *) codearea_addr_exec(&chunk->code), chunk->size));
+ 
+ 	code_memory_used += chunk_size;
+ 	mono_runtime_resource_check_limit (MONO_RESOURCE_JIT_CODE, code_memory_used);
+@@ -593,7 +714,7 @@ new_codechunk (MonoCodeManager *cman, int size)
+  * \param size size of memory to allocate
+  * \param alignment power of two alignment value
+  * Allocates at least \p size bytes of memory inside the code manager \p cman.
+- * \returns the pointer to the allocated memory or NULL on failure
++ * \returns the pointer to the allocated memory or NULL on failure. On libnx this is the rx address, so that it can be used to call mono_codeman_enable_write_ex()
+  */
+ void*
+ mono_code_manager_reserve_align (MonoCodeManager *cman, int size, int alignment)
+@@ -626,8 +747,9 @@ mono_code_manager_reserve_align (MonoCodeManager *cman, int size, int alignment)
+ 			chunk->pos = ALIGN_INT (chunk->pos, alignment);
+ 			/* Align the chunk->data we add to chunk->pos */
+ 			/* or we can't guarantee proper alignment     */
+-			ptr = (void*)((((uintptr_t)chunk->data + align_mask) & ~(uintptr_t)align_mask) + chunk->pos);
+-			chunk->pos = GPTRDIFF_TO_INT (((char*)ptr - chunk->data) + size);
++			char* address = codearea_addr_exec(&chunk->code);
++			ptr = (void*)((((uintptr_t)address + align_mask) & ~(uintptr_t)align_mask) + chunk->pos);
++			chunk->pos = GPTRDIFF_TO_INT (((char*)ptr - address) + size);
+ 			return ptr;
+ 		}
+ 	}
+@@ -657,8 +779,9 @@ mono_code_manager_reserve_align (MonoCodeManager *cman, int size, int alignment)
+ 	chunk->pos = ALIGN_INT (chunk->pos, alignment);
+ 	/* Align the chunk->data we add to chunk->pos */
+ 	/* or we can't guarantee proper alignment     */
+-	ptr = (void*)((((uintptr_t)chunk->data + align_mask) & ~(uintptr_t)align_mask) + chunk->pos);
+-	chunk->pos = GPTRDIFF_TO_INT (((char*)ptr - chunk->data) + size);
++	char* address = codearea_addr_exec(&chunk->code);
++	ptr = (void*)((((uintptr_t)address + align_mask) & ~(uintptr_t)align_mask) + chunk->pos);
++	chunk->pos = GPTRDIFF_TO_INT (((char*)ptr - address) + size);
+ 	return ptr;
+ }
+ 
+@@ -678,7 +801,7 @@ mono_code_manager_reserve (MonoCodeManager *cman, int size)
+ /**
+  * mono_code_manager_commit:
+  * \param cman a code manager
+- * \param data the pointer returned by mono_code_manager_reserve ()
++ * \param data the pointer returned by mono_codeman_enable_write_ex(). On libnx this is the rw view of a jit area (or the raw data pointer if this is not a dynamic code manager), on other platforms this matches with the pointer returned by mono_code_manager_reserve ()
+  * \param size the size requested in the call to mono_code_manager_reserve ()
+  * \param newsize the new size to reserve
+  * If we reserved too much room for a method and we didn't allocate
+@@ -690,7 +813,17 @@ mono_code_manager_commit (MonoCodeManager *cman, void *data, int size, int newsi
+ {
+ 	g_assert (newsize <= size);
+ 
+-	if (cman->current && (size != newsize) && (data == cman->current->data + cman->current->pos - size)) {
++	// Can this ever happen?
++	if (!cman->current)
++		return;
++
++	bool isPlain = codearea_is_plain(&cman->current->code);
++	char* baseAddr = codearea_addr_exec(&cman->current->code);
++
++	// Ensure our math is right
++	mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_DIAGNOSTICS, "mono_code_manager_commit: data=%p plain=%d rx=%p", data, isPlain, baseAddr);
++
++	if (size != newsize && (data == baseAddr + cman->current->pos - size)) {
+ 		cman->current->pos -= size - newsize;
+ 	}
+ }
+@@ -734,6 +867,11 @@ mono_codeman_enable_write (void)
+ {
+ 	if (codeman_no_exec)
+ 		return;
++
++#if HOST_LIBNX
++	mono_trace_error (MONO_TRACE_SECURITY, "mono_codeman_enable_write called on libnx platform. This is not supported");
++#endif
++
+ #ifdef HAVE_PTHREAD_JIT_WRITE_PROTECT_NP
+ 	if (__builtin_available (macOS 11, *)) {
+ 		int level = GPOINTER_TO_INT (mono_native_tls_get_value (write_level_tls_id));
+@@ -757,6 +895,11 @@ mono_codeman_disable_write (void)
+ {
+ 	if (codeman_no_exec)
+ 		return;
++
++#if HOST_LIBNX
++	mono_trace_error (MONO_TRACE_SECURITY, "mono_codeman_disable_write called on libnx platform. This is not supported");
++#endif
++
+ #ifdef HAVE_PTHREAD_JIT_WRITE_PROTECT_NP
+ 	if (__builtin_available (macOS 11, *)) {
+ 		int level = GPOINTER_TO_INT (mono_native_tls_get_value (write_level_tls_id));
+@@ -770,3 +913,90 @@ mono_codeman_disable_write (void)
+ 	/* JITing in Catalyst apps is not allowed on Apple Silicon, so assume if we're here we don't really have executable pages */
+ #endif
+ }
++
++#if HOST_LIBNX
++guint8* mono_codeman_find_write_address (void* exec_address, const char* trace_line)
++{
++	if (!trace_line) trace_line = "(unknown source)";
++	if (!exec_address) {
++		mono_trace_error(MONO_TRACE_TYPE, "mono_codeman_find_write_address: exec_address is NULL %s", trace_line);
++		return NULL;
++	}
++
++	ptrdiff_t offset = 0;
++	JitAreaNode* jit = nx_jit_find_area(exec_address, JIT_AREA_LOOKUP_BY_RX, &offset);
++	if (!jit) 
++	{
++		mono_trace_error(MONO_TRACE_TYPE, "mono_codeman_find_write_address: jit area not found for rx=%p %s", exec_address, trace_line);
++		return NULL;
++	}
++
++	return (guint8*)jit->nativeJit.rw_addr + offset;
++}
++
++guint8* mono_codeman_find_exec_address (void* write_address, const char* trace_line)
++{
++	if (!trace_line) trace_line = "(unknown source)";	
++	if (!write_address) {
++		mono_trace_error(MONO_TRACE_TYPE, "mono_codeman_find_exec_address: write_address is NULL %s", trace_line);
++		return NULL;
++	}
++
++	ptrdiff_t offset = 0;
++	JitAreaNode* jit = nx_jit_find_area(write_address, JIT_AREA_LOOKUP_BY_RW, &offset);
++	if (!jit)  
++	{
++		mono_trace_error(MONO_TRACE_TYPE, "mono_codeman_find_exec_address: jit area not found for rw=%p %s", write_address, trace_line);
++		return NULL;
++	}
++
++	return (guint8*)jit->nativeJit.rx_addr + offset;
++}
++#else
++guint8* mono_codeman_find_write_address (void* exec_address, const char* trace_line)
++{
++	return (guint8*)exec_address;
++}
++
++guint8* mono_codeman_find_exec_address (void* write_address, const char* trace_line)
++{
++	return (guint8*)write_address;
++}
++#endif
++
++guint8* mono_codeman_enable_write_ex (void* address, const char* trace_line)
++{
++	// Some AOT code paths seem to end up calling this function, in that case don't perform translation
++	// In the optimal case just return the address.
++	if (mono_aot_mode == MONO_AOT_MODE_FULL)
++		return (guint8*)address;
++
++	#if !HOST_LIBNX
++	mono_codeman_enable_write ();
++	#endif
++
++	guint8* res = mono_codeman_find_write_address (address, trace_line);
++	
++	// HACK: This is wrong here, if this address refers to an AOT image we should return it as-is
++	// To check we'd need a reference to the CodeManager* that allocated this address
++	g_assert (res != NULL);
++
++	return res;
++}
++
++guint8* mono_codeman_disable_write_ex (void* address, const char* trace_line)
++{	
++	if (mono_aot_mode == MONO_AOT_MODE_FULL)
++		return (guint8*)address;
++
++	#if !HOST_LIBNX
++	mono_codeman_disable_write ();
++	#else
++	nx_jit_flush_cache_by_address (address);
++	#endif
++
++	guint8* res = mono_codeman_find_exec_address (address, trace_line);
++	g_assert (res != NULL);
++
++	return res;
++}
+diff --git a/src/mono/mono/utils/mono-codeman.h b/src/mono/mono/utils/mono-codeman.h
+index 69893b401..e50faa5a4 100644
+--- a/src/mono/mono/utils/mono-codeman.h
++++ b/src/mono/mono/utils/mono-codeman.h
+@@ -45,5 +45,17 @@ void            mono_code_manager_foreach  (MonoCodeManager *cman, MonoCodeManag
+ void mono_codeman_enable_write (void);
+ void mono_codeman_disable_write (void);
+ 
++// On libnx, we can only allocate W^X memory so we need to manualy switch permissions every time we need to write new code
++// However, the same memory region is mapped at two different addresses, one for executing and one for writing.
++// Codeman clients do not have this assumption so for compatibility we provide a way to transparently switch between the two.
++// the _ex functions take the current address held by the client and return the address that should be used to write or execute to.
++// This is very hacky and could cause issues if the client is not careful (eg, copying the address before calling the function)
++// These functions work in conjunction with the new MINI_xyz_CODEGEN_EX macros
++guint8* mono_codeman_enable_write_ex (void* exec_address, const char* trace_line);
++guint8* mono_codeman_disable_write_ex (void* write_address, const char* trace_line);
++
++guint8* mono_codeman_find_write_address (void* exec_address, const char* trace_line);
++guint8* mono_codeman_find_exec_address (void* write_address, const char* trace_line);
++
+ #endif /* __MONO_CODEMAN_H__ */
+ 
+diff --git a/src/mono/mono/utils/mono-context.c b/src/mono/mono/utils/mono-context.c
+index 9585a0c72..eaf58d860 100644
+--- a/src/mono/mono/utils/mono-context.c
++++ b/src/mono/mono/utils/mono-context.c
+@@ -512,7 +512,7 @@ mono_monoctx_to_sigctx (MonoContext *mctx, void *ctx)
+ #endif
+ }
+ 
+-#elif (defined(__aarch64__) && !defined(MONO_CROSS_COMPILE)) || (defined(TARGET_ARM64))
++#elif ((defined(__aarch64__) && !defined(MONO_CROSS_COMPILE)) || (defined(TARGET_ARM64))) && !defined(HOST_LIBNX)
+ 
+ #include <mono/utils/mono-context.h>
+ #include <mono/utils/ftnptr.h>
+@@ -613,7 +613,7 @@ mono_monoctx_to_sigctx (MonoContext *mctx, void *sigctx)
+ 	UCONTEXT_REG_Rn(uc, 1) = mctx->sc_sp;
+ }
+ 
+-#elif defined (TARGET_WASM)
++#elif defined (TARGET_WASM) || HOST_LIBNX
+ 
+ #include <mono/utils/mono-context.h>
+ 
+diff --git a/src/mono/mono/utils/mono-dl-wasm.c b/src/mono/mono/utils/mono-dl-wasm.c
+index e601c3f96..eaa8d991d 100644
+--- a/src/mono/mono/utils/mono-dl-wasm.c
++++ b/src/mono/mono/utils/mono-dl-wasm.c
+@@ -2,7 +2,7 @@
+ #include <mono/utils/mono-compiler.h>
+ #include <mono/eglib/glib.h>
+ 
+-#if defined (HOST_WASM)
++#if defined (HOST_WASM) || HOST_LIBNX
+ 
+ #include "mono/utils/mono-dl.h"
+ #include "mono/utils/mono-path.h"
+@@ -13,7 +13,11 @@
+ #include <string.h>
+ #include <glib.h>
+ 
+-#ifndef HOST_WASI
++#if HOST_LIBNX
++#define HOST_WASI 1
++#endif
++
++#ifndef HOST_WASI 
+ #include <dlfcn.h>
+ #endif
+ 
+diff --git a/src/mono/mono/utils/mono-log-libnx.c b/src/mono/mono/utils/mono-log-libnx.c
+new file mode 100644
+index 000000000..87fc88e51
+--- /dev/null
++++ b/src/mono/mono/utils/mono-log-libnx.c
+@@ -0,0 +1,129 @@
++/**
++ * \file
++ * Simplistic simulation of a syslog logger for Windows
++ *
++ * This module contains the Windows syslog logger interface
++ *
++ * Author:
++ *    Neale Ferguson <neale@sinenomine.net>
++ *
++ */
++#include <config.h>
++
++#ifdef HAVE_UNISTD_H
++#include <unistd.h>
++#endif
++
++#ifdef HOST_LIBNX
++
++#include <stdlib.h>
++#include <stdio.h>
++#include <ctype.h>
++#include <string.h>
++#include <errno.h>
++#include <time.h>
++
++#include "mono-logger-internals.h"
++#include "mono-proclib.h"
++#include "mono-time.h"
++
++static FILE *logFile = NULL;
++static void *logUserData = NULL;
++static const char *logFileName = ".//mono.log"; // FIXME double slash
++
++/**
++ * mapSyslogLevel:
++ *
++ * 	@level - GLogLevelFlags value
++ * 	@returns The equivalent character identifier
++ */
++static char
++mapLogFileLevel (GLogLevelFlags level)
++{
++	if (level & G_LOG_LEVEL_ERROR)
++		return ('E');
++	if (level & G_LOG_LEVEL_CRITICAL)
++		return ('C');
++	if (level & G_LOG_LEVEL_WARNING)
++		return ('W');
++	if (level & G_LOG_LEVEL_MESSAGE)
++		return ('N');
++	if (level & G_LOG_LEVEL_INFO)
++		return ('I');
++	if (level & G_LOG_LEVEL_DEBUG)
++		return ('D');
++	return ('I');
++}
++
++/**
++ * mono_log_open_syslog:
++ * \param ident Identifier: ignored
++ * \param userData Not used
++ * Open the syslog file. If the open fails issue a warning and
++ * use stdout as the log file destination.
++ */
++void
++mono_log_open_syslog(const char *ident, void *userData)
++{
++	logFile = fopen(logFileName, "w");
++	if (logFile == NULL) {
++		g_warning("opening of log file %s failed with %s",
++			  strerror(errno));
++		logFile = stdout;
++	}
++	logUserData = userData;
++}
++
++/**
++ * mono_log_write_syslog
++ * \param domain Identifier string
++ * \param level Logging level flags
++ * \param format \c printf format string
++ * \param vargs Variable argument list
++ * Write data to the syslog file.
++ */
++void
++mono_log_write_syslog(const char *domain, GLogLevelFlags level, mono_bool hdr, const char *message)
++{
++	time_t t;
++	int pid;
++	char logTime [80];
++
++	if (logFile == NULL)
++		logFile = stdout;
++
++	struct tm *tod;
++	time(&t);
++	tod = localtime(&t);
++	pid = mono_process_current_pid ();
++	strftime(logTime, sizeof(logTime), MONO_STRFTIME_F " " MONO_STRFTIME_T, tod);
++
++	fprintf (logFile, "%s level[%c] mono[%d]: %s\n", logTime, mapLogFileLevel (level), pid, message);
++
++	fflush(logFile);
++
++	if (level & G_LOG_LEVEL_ERROR)
++		g_assert_abort ();
++}
++
++/**
++ * mono_log_close_syslog
++ *
++ * 	Close the syslog file
++ */
++void
++mono_log_close_syslog(void)
++{
++	if (logFile) {
++		fclose(logFile);
++		logFile = NULL;
++	}
++}
++
++#else
++
++#include <mono/utils/mono-compiler.h>
++
++MONO_EMPTY_SOURCE_FILE (mono_log_libnx);
++
++#endif
+diff --git a/src/mono/mono/utils/mono-mmap-libnx.c b/src/mono/mono/utils/mono-mmap-libnx.c
+new file mode 100644
+index 000000000..cc69cbc1e
+--- /dev/null
++++ b/src/mono/mono/utils/mono-mmap-libnx.c
+@@ -0,0 +1,88 @@
++
++#include <config.h>
++
++#ifdef HOST_LIBNX
++#include <switch.h>
++
++#include <stddef.h>
++#include <errno.h>
++
++#include "mono-mmap.h"
++#include "mono-mmap-internals.h"
++#include "mono-proclib.h"
++#include <mono/utils/mono-threads.h>
++#include <mono/utils/atomic.h>
++#include <mono/utils/mono-counters.h>
++
++void* __libnx_alloc(size_t size);
++void* __libnx_aligned_alloc(size_t alignment, size_t size);
++void __libnx_free(void* p);
++
++// posix_memalign compatible function
++int posix_memalign(void** memptr, size_t alignment, size_t size) {
++    if (memptr == NULL) {
++        return EINVAL;
++    }
++
++    if (alignment == 0 || (alignment & (alignment - 1)) != 0) {
++        // Alignment must be a power of two and greater than zero
++        return EINVAL;
++    }
++
++    *memptr = __libnx_aligned_alloc(alignment, size);
++    if (*memptr == NULL) {
++        return ENOMEM;
++    }
++
++    return 0;
++}
++
++int
++mono_pagesize (void)
++{
++	return 4096;
++}
++
++int
++mono_valloc_granule (void)
++{
++	return mono_pagesize ();
++}
++
++void*
++mono_valloc (void *addr, size_t length, int flags, MonoMemAccountType type)
++{
++	g_assert (addr == NULL);
++	return mono_valloc_aligned (length, mono_pagesize (), flags, type);
++}
++
++void*
++mono_valloc_aligned (size_t size, size_t alignment, int flags, MonoMemAccountType type)
++{
++	void *res = NULL;
++	if (posix_memalign (&res, alignment, size))
++		return NULL;
++
++	memset (res, 0, size);
++	return res;
++}
++
++#define HAVE_VALLOC_ALIGNED
++
++int
++mono_vfree (void *addr, size_t length, MonoMemAccountType type)
++{
++	__libnx_free (addr);
++	return 0;
++}
++
++int
++mono_mprotect (void *addr, size_t length, int flags)
++{
++	if (flags & MONO_MMAP_DISCARD) {
++		memset (addr, 0, length);
++	}
++	return 0;
++}
++
++#endif
+diff --git a/src/mono/mono/utils/mono-mmap.c b/src/mono/mono/utils/mono-mmap.c
+index 09af6f899..a7a7fb3ae 100644
+--- a/src/mono/mono/utils/mono-mmap.c
++++ b/src/mono/mono/utils/mono-mmap.c
+@@ -49,7 +49,8 @@
+ #define MAP_ANONYMOUS MAP_ANON
+ #endif
+ 
+-#if !defined(__APPLE__)  // returning virtual addresses <4G requires entitlement on Apple platforms, do not use it
++#if !defined(__APPLE__)  // returning virtual addresses <4G requires entitlement on Apple platforms, do not use it 
++
+ #ifndef MAP_32BIT
+ #define MAP_32BIT 0
+ #endif
+@@ -133,6 +134,10 @@ mono_mem_account_register_counters (void)
+ // WebAssembly implementation in mono-mmap-wasm.c
+ #define HAVE_VALLOC_ALIGNED
+ 
++#elif defined(HOST_LIBNX)
++// Switch specific implementation in mono-mmap-libnx.c
++#define HAVE_VALLOC_ALIGNED
++
+ #else
+ 
+ #if defined(HAVE_MMAP)
+diff --git a/src/mono/mono/utils/mono-proclib.c b/src/mono/mono/utils/mono-proclib.c
+index 0daec1915..0853741cf 100644
+--- a/src/mono/mono/utils/mono-proclib.c
++++ b/src/mono/mono/utils/mono-proclib.c
+@@ -27,6 +27,9 @@
+ #ifdef HAVE_SYS_SYSCTL_H
+ #include <sys/sysctl.h>
+ #endif
++#ifdef HOST_LIBNX
++#include <switch.h>
++#endif
+ #endif
+ 
+ #if defined(HOST_BROWSER)
+@@ -44,6 +47,8 @@ mono_process_current_pid (void)
+ 	return (int) getpid ();
+ #elif defined(HOST_WASI)
+ 	return 0;
++#elif defined(HOST_LIBNX)
++	return 0;
+ #else
+ #error getpid
+ #endif
+diff --git a/src/mono/mono/utils/mono-sigcontext.h b/src/mono/mono/utils/mono-sigcontext.h
+index 3f2fc88ac..91c16b3f0 100644
+--- a/src/mono/mono/utils/mono-sigcontext.h
++++ b/src/mono/mono/utils/mono-sigcontext.h
+@@ -407,7 +407,7 @@
+ 
+ #elif defined(TARGET_ARM64)
+ 
+-#if defined(MONO_CROSS_COMPILE)
++#if defined(MONO_CROSS_COMPILE) || defined(HOST_LIBNX)
+ 	#define UCONTEXT_REG_PC(ctx) NULL
+ 	#define UCONTEXT_REG_SP(ctx) NULL
+ 	#define UCONTEXT_REG_R0(ctx) NULL
+diff --git a/src/mono/mono/utils/mono-threads-libnx.c b/src/mono/mono/utils/mono-threads-libnx.c
+new file mode 100644
+index 000000000..3f9384569
+--- /dev/null
++++ b/src/mono/mono/utils/mono-threads-libnx.c
+@@ -0,0 +1,63 @@
++#include <config.h>
++
++#if defined(HOST_LIBNX)
++
++#include <mono/utils/mono-threads.h>
++#include <pthread.h>
++#include <switch.h>
++
++void
++mono_threads_platform_get_stack_bounds (guint8 **staddr, size_t *stsize)
++{	
++	*staddr = NULL;
++	*stsize = (size_t)-1;
++
++	Thread *thread = threadGetSelf();
++	if (!thread) {
++		printf("Error: threadGetSelf() failed\n");
++		return;
++	}
++
++	*staddr = (guint8 *)thread->stack_mirror;
++	if (!*staddr)
++		*staddr = (guint8 *)thread->stack_mem;
++
++	*stsize = thread->stack_sz;
++}
++
++guint64
++mono_native_thread_os_id_get (void)
++{
++	return (guint64)threadGetCurHandle();
++}
++
++void
++mono_threads_suspend_init_signals (void)
++{
++}
++
++gint
++mono_threads_suspend_get_suspend_signal (void)
++{
++	return -1;
++}
++
++gint
++mono_threads_suspend_get_restart_signal (void)
++{
++	return -1;
++}
++
++gint
++mono_threads_suspend_get_abort_signal (void)
++{
++	return -1;
++}
++
++#else
++
++#include <mono/utils/mono-compiler.h>
++
++MONO_EMPTY_SOURCE_FILE (mono_threads_libnx);
++
++#endif
+diff --git a/src/mono/mono/utils/mono-threads-posix-signals.c b/src/mono/mono/utils/mono-threads-posix-signals.c
+index 1e1c4718d..3edfd4811 100644
+--- a/src/mono/mono/utils/mono-threads-posix-signals.c
++++ b/src/mono/mono/utils/mono-threads-posix-signals.c
+@@ -13,7 +13,7 @@
+ 
+ #include "mono-threads.h"
+ 
+-#if defined(USE_POSIX_BACKEND)
++#if defined(USE_POSIX_BACKEND) && !defined(HOST_LIBNX)
+ 
+ #include <errno.h>
+ #include <mono/utils/mono-errno.h>
+diff --git a/src/mono/mono/utils/mono-threads-posix.c b/src/mono/mono/utils/mono-threads-posix.c
+index fa1899390..2f32e46ef 100644
+--- a/src/mono/mono/utils/mono-threads-posix.c
++++ b/src/mono/mono/utils/mono-threads-posix.c
+@@ -36,15 +36,16 @@
+ 
+ #include <errno.h>
+ 
+-#if defined(_POSIX_VERSION) && !defined (HOST_WASM)
++#if (defined(_POSIX_VERSION) && !defined (HOST_WASM)) || defined(HOST_LIBNX)
++	#include <pthread.h>
+ 
+-#include <pthread.h>
++	#ifndef HOST_LIBNX
++		#include <sys/mman.h>
++	#endif
+ 
+-#include <sys/mman.h>
+-
+-#ifdef HAVE_SYS_RESOURCE_H
+-#include <sys/resource.h>
+-#endif
++	#ifdef HAVE_SYS_RESOURCE_H
++		#include <sys/resource.h>
++	#endif
+ 
+ static pthread_mutex_t memory_barrier_process_wide_mutex = PTHREAD_MUTEX_INITIALIZER;
+ static void *memory_barrier_process_wide_helper_page;
+@@ -137,7 +138,7 @@ mono_threads_platform_exit (gsize exit_code)
+ 	pthread_exit ((gpointer) exit_code);
+ }
+ 
+-#if HOST_FUCHSIA
++#if HOST_FUCHSIA || HOST_LIBNX
+ int
+ mono_thread_info_get_system_max_stack_size (void)
+ {
+diff --git a/src/mono/mono/utils/mono-threads.h b/src/mono/mono/utils/mono-threads.h
+index 44f2535fb..840c6db6e 100644
+--- a/src/mono/mono/utils/mono-threads.h
++++ b/src/mono/mono/utils/mono-threads.h
+@@ -129,17 +129,17 @@ and reduce the number of casts drastically.
+ // #define USE_SIGNALS_ON_MACH
+ 
+ #ifdef HOST_WASM
+-#define USE_WASM_BACKEND
+-#elif defined (_POSIX_VERSION)
+-#if defined (__MACH__) && !defined (USE_SIGNALS_ON_MACH)
+-#define USE_MACH_BACKEND
+-#else
+-#define USE_POSIX_BACKEND
++	#define USE_WASM_BACKEND
++#elif defined (_POSIX_VERSION) || defined(HOST_LIBNX)
++	#if defined (__MACH__) && !defined (USE_SIGNALS_ON_MACH)
++		#define USE_MACH_BACKEND
++	#else
++		#define USE_POSIX_BACKEND
+ #endif
+ #elif HOST_WIN32
+-#define USE_WINDOWS_BACKEND
++	#define USE_WINDOWS_BACKEND
+ #else
+-#error "no backend support for current platform"
++	#error "no backend support for current platform"
+ #endif /* defined (_POSIX_VERSION) */
+ 
+ enum {
+diff --git a/src/mono/monoaotcross.proj b/src/mono/monoaotcross.proj
+index b31f88314..828085a00 100644
+--- a/src/mono/monoaotcross.proj
++++ b/src/mono/monoaotcross.proj
+@@ -10,12 +10,14 @@
+     <_MonoCrossAOTTargetOS Condition="$(_MonoGenerateOffsetsOSGroups.contains('+tvos+'))">$(_MonoCrossAOTTargetOS)+tvos+</_MonoCrossAOTTargetOS>
+     <_MonoCrossAOTTargetOS Condition="$(_MonoGenerateOffsetsOSGroups.contains('+ios+'))">$(_MonoCrossAOTTargetOS)+ios+</_MonoCrossAOTTargetOS>
+     <_MonoCrossAOTTargetOS Condition="$(_MonoGenerateOffsetsOSGroups.contains('+maccatalyst+'))">$(_MonoCrossAOTTargetOS)+maccatalyst+</_MonoCrossAOTTargetOS>
++    <_MonoCrossAOTTargetOS Condition="$(_MonoGenerateOffsetsOSGroups.contains('+libnx+'))">$(_MonoCrossAOTTargetOS)+libnx+</_MonoCrossAOTTargetOS>
+     <MonoAotTargets Condition="$(_MonoCrossAOTTargetOS.contains('+android+'))">$(MonoAotTargets);android-x64;android-arm64;android-x86;android-arm</MonoAotTargets>
+     <MonoAotTargets Condition="$(_MonoCrossAOTTargetOS.contains('+browser+'))">$(MonoAotTargets);browser-wasm</MonoAotTargets>
+     <MonoAotTargets Condition="$(_MonoCrossAOTTargetOS.contains('+wasi+'))">$(MonoAotTargets);wasi-wasm</MonoAotTargets>
+     <MonoAotTargets Condition="$(_MonoCrossAOTTargetOS.contains('+tvos+'))">$(MonoAotTargets);tvossimulator-x64;tvossimulator-arm64;tvos-arm64</MonoAotTargets>
+     <MonoAotTargets Condition="$(_MonoCrossAOTTargetOS.contains('+ios+'))">$(MonoAotTargets);iossimulator-x64;iossimulator-arm64;ios-arm64</MonoAotTargets>
+     <MonoAotTargets Condition="$(_MonoCrossAOTTargetOS.contains('+maccatalyst+'))">$(MonoAotTargets);maccatalyst-x64;maccatalyst-arm64</MonoAotTargets>
++    <MonoAotTargets Condition="$(_MonoCrossAOTTargetOS.contains('+libnx+'))">$(MonoAotTargets);libnx-arm64</MonoAotTargets>
+   </PropertyGroup>
+ 
+   <ItemGroup>
+diff --git a/src/native/corehost/apphost/static/CMakeLists.txt b/src/native/corehost/apphost/static/CMakeLists.txt
+index 8e0098c19..9180158a6 100644
+--- a/src/native/corehost/apphost/static/CMakeLists.txt
++++ b/src/native/corehost/apphost/static/CMakeLists.txt
+@@ -195,7 +195,7 @@ else()
+     include(${CLR_SRC_NATIVE_DIR}/libs/System.IO.Compression.Native/extra_libs.cmake)
+     append_extra_compression_libs(NATIVE_LIBS)
+ 
+-    if (NOT CLR_CMAKE_TARGET_TVOS AND NOT CLR_CMAKE_TARGET_ANDROID AND NOT CLR_CMAKE_TARGET_BROWSER) # no gssapi on tvOS, see https://developer.apple.com/documentation/gss
++    if (NOT CLR_CMAKE_TARGET_TVOS AND NOT CLR_CMAKE_TARGET_ANDROID AND NOT CLR_CMAKE_TARGET_BROWSER AND NOT CLR_CMAKE_TARGET_LIBNX) # no gssapi on tvOS, see https://developer.apple.com/documentation/gss
+         # Additional requirements for System.Net.Security.Native
+         include(${CLR_SRC_NATIVE_DIR}/libs/System.Net.Security.Native/extra_libs.cmake)
+         append_extra_security_libs(NATIVE_LIBS)
+@@ -205,7 +205,7 @@ else()
+     include(${CLR_SRC_NATIVE_DIR}/libs/System.Native/extra_libs.cmake)
+     append_extra_system_libs(NATIVE_LIBS)
+ 
+-    if(NOT CLR_CMAKE_TARGET_APPLE AND NOT CLR_CMAKE_TARGET_ANDROID AND NOT CLR_CMAKE_TARGET_BROWSER)
++    if(NOT CLR_CMAKE_TARGET_APPLE AND NOT CLR_CMAKE_TARGET_ANDROID AND NOT CLR_CMAKE_TARGET_BROWSER AND NOT CLR_CMAKE_TARGET_LIBNX)
+         # Additional requirements for System.Security.Cryptography.Native.OpenSsl
+         include(${CLR_SRC_NATIVE_DIR}/libs/System.Security.Cryptography.Native/extra_libs.cmake)
+         append_extra_cryptography_libs(NATIVE_LIBS)
+diff --git a/src/native/eventpipe/ds-ipc-pal-socket.c b/src/native/eventpipe/ds-ipc-pal-socket.c
+index b0ce0577c..8760dcb40 100644
+--- a/src/native/eventpipe/ds-ipc-pal-socket.c
++++ b/src/native/eventpipe/ds-ipc-pal-socket.c
+@@ -28,7 +28,11 @@
+ #include <unistd.h>
+ #include <fcntl.h>
+ #include <errno.h>
++#ifndef __SWITCH__
+ #include <sys/un.h>
++#else
++#include <arpa/inet.h>
++#endif
+ #include <sys/stat.h>
+ 
+ #if __GNUC__
+diff --git a/src/native/libs/CMakeLists.txt b/src/native/libs/CMakeLists.txt
+index cf8b2b47f..679a9de9d 100644
+--- a/src/native/libs/CMakeLists.txt
++++ b/src/native/libs/CMakeLists.txt
+@@ -27,7 +27,7 @@ else ()
+     set(STATIC_LIB_DESTINATION .)
+ endif ()
+ 
+-if (CLR_CMAKE_TARGET_UNIX OR CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI)
++if (CLR_CMAKE_TARGET_UNIX OR CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI OR CLR_CMAKE_TARGET_LIBNX)
+     set(CMAKE_MACOSX_RPATH ON)
+     if (CLR_CMAKE_TARGET_MACCATALYST OR CLR_CMAKE_TARGET_IOS OR CLR_CMAKE_TARGET_TVOS)
+         set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
+@@ -44,7 +44,7 @@ if (CLR_CMAKE_TARGET_UNIX OR CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI)
+     add_compile_options(-I${CMAKE_CURRENT_SOURCE_DIR}/Common)
+     add_compile_options(-I${CMAKE_CURRENT_BINARY_DIR}/Common)
+ 
+-    if (CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI)
++    if (CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI OR CLR_CMAKE_TARGET_LIBNX)
+         set(GEN_SHARED_LIB 0)
+         set(STATIC_LIB_DESTINATION .)
+     endif ()
+@@ -112,10 +112,10 @@ endif ()
+ 
+ add_subdirectory(System.IO.Compression.Native)
+ 
+-if (CLR_CMAKE_TARGET_UNIX OR CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI)
++if (CLR_CMAKE_TARGET_UNIX OR CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI OR CLR_CMAKE_TARGET_LIBNX)
+     include(configure.cmake)
+ 
+-    if (NOT CLR_CMAKE_TARGET_BROWSER AND NOT CLR_CMAKE_TARGET_WASI AND NOT CLR_CMAKE_TARGET_IOS AND NOT CLR_CMAKE_TARGET_TVOS)
++    if (NOT CLR_CMAKE_TARGET_BROWSER AND NOT CLR_CMAKE_TARGET_WASI AND NOT CLR_CMAKE_TARGET_IOS AND NOT CLR_CMAKE_TARGET_TVOS AND NOT CLR_CMAKE_TARGET_LIBNX)
+         add_subdirectory(System.IO.Ports.Native)
+     endif ()
+ 
+@@ -148,7 +148,7 @@ if (CLR_CMAKE_TARGET_UNIX OR CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI)
+     add_subdirectory(System.Native)
+     add_subdirectory(System.Globalization.Native)
+ 
+-    if (CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI)
++    if (CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI OR CLR_CMAKE_TARGET_LIBNX)
+         # skip for now
+     elseif (CLR_CMAKE_TARGET_APPLE)
+         if (NOT CLR_CMAKE_TARGET_TVOS) # no gssapi on tvOS, see https://developer.apple.com/documentation/gss
+diff --git a/src/native/libs/Common/pal_utilities.h b/src/native/libs/Common/pal_utilities.h
+index a1a57c8ed..24c16ebe0 100644
+--- a/src/native/libs/Common/pal_utilities.h
++++ b/src/native/libs/Common/pal_utilities.h
+@@ -78,7 +78,7 @@ inline static int ToFileDescriptorUnchecked(intptr_t fd)
+ */
+ inline static int ToFileDescriptor(intptr_t fd)
+ {
+-#ifndef TARGET_WASI // the valid range of file descriptors is probably INT32_MIN <= fd && fd <= INT32_MAX, the negative handles are valid for console.
++#if !defined(TARGET_WASI) && !defined(TARGET_LIBNX)  // the valid range of file descriptors is probably INT32_MIN <= fd && fd <= INT32_MAX, the negative handles are valid for console.
+     assert(0 <= fd && fd < sysconf(_SC_OPEN_MAX));
+ #endif
+ 
+diff --git a/src/native/libs/System.Globalization.Native/CMakeLists.txt b/src/native/libs/System.Globalization.Native/CMakeLists.txt
+index 428ed9bf1..ea464cb6d 100644
+--- a/src/native/libs/System.Globalization.Native/CMakeLists.txt
++++ b/src/native/libs/System.Globalization.Native/CMakeLists.txt
+@@ -3,6 +3,13 @@ cmake_minimum_required(VERSION 3.10..3.20)
+ 
+ project(System.Globalization.Native C)
+ 
++if (CLR_CMAKE_TARGET_LIBNX)
++    set(CMAKE_ICU_DIR $ENV{ICU_NX_INSTALL_DIR})
++    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations -Wno-address")
++    # message test
++    message(STATUS "CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
++endif()
++
+ if(CLR_CMAKE_TARGET_UNIX OR CLR_CMAKE_TARGET_WASI)
+     if (ANDROID_FORCE_ICU_DATA_DIR)
+         add_definitions(-DANDROID_FORCE_ICU_DATA_DIR)
+@@ -108,7 +115,7 @@ if (LOCAL_BUILD)
+     # For minipal files
+     include_directories(../../)
+     include_directories(${CMAKE_CURRENT_BINARY_DIR})
+-elseif (CLR_CMAKE_TARGET_MACCATALYST OR CLR_CMAKE_TARGET_IOS OR CLR_CMAKE_TARGET_TVOS OR CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI)
++elseif (CLR_CMAKE_TARGET_MACCATALYST OR CLR_CMAKE_TARGET_IOS OR CLR_CMAKE_TARGET_TVOS OR CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_WASI OR CLR_CMAKE_TARGET_LIBNX)
+     add_definitions(-DSTATIC_ICU)
+     set(NATIVEGLOBALIZATION_SOURCES ${NATIVEGLOBALIZATION_SOURCES} pal_icushim_static.c)
+ else()
+diff --git a/src/native/libs/System.Globalization.Native/pal_icushim_static.c b/src/native/libs/System.Globalization.Native/pal_icushim_static.c
+index ba6d76d82..5d3bb11d8 100644
+--- a/src/native/libs/System.Globalization.Native/pal_icushim_static.c
++++ b/src/native/libs/System.Globalization.Native/pal_icushim_static.c
+@@ -205,7 +205,7 @@ GlobalizationNative_LoadICUData(const char* path)
+ 
+ int32_t GlobalizationNative_LoadICU(void)
+ {
+-#if !defined(LOCAL_BUILD)
++#if !defined(LOCAL_BUILD) && !defined(TARGET_LIBNX)
+ // Static NativeAOT compilation does not have
+ // GlobalizationNative_LoadICUData() as entrypoint
+     if (!isDataSet)
+diff --git a/src/native/libs/System.Native/CMakeLists.txt b/src/native/libs/System.Native/CMakeLists.txt
+index 1407d50e0..a88aabaa0 100644
+--- a/src/native/libs/System.Native/CMakeLists.txt
++++ b/src/native/libs/System.Native/CMakeLists.txt
+@@ -21,16 +21,7 @@ set(NATIVE_SOURCES
+     pal_sysctl.c
+ )
+ 
+-if (NOT CLR_CMAKE_TARGET_WASI)
+-    list (APPEND NATIVE_SOURCES
+-        pal_dynamicload.c
+-        pal_mount.c
+-        pal_process.c
+-        pal_signal.c
+-        pal_threading.c
+-        pal_uid.c
+-    )
+-else()
++if (CLR_CMAKE_TARGET_WASI)
+     list (APPEND NATIVE_SOURCES
+         pal_dynamicload_wasi.c
+         pal_mount_wasi.c
+@@ -39,6 +30,24 @@ else()
+         pal_threading_wasi.c
+         pal_uid_wasi.c
+     )
++elseif (CLR_CMAKE_TARGET_LIBNX)    
++    list (APPEND NATIVE_SOURCES
++        pal_dynamicload_wasi.c
++        pal_mount_wasi.c
++        pal_process_libnx.c
++        pal_signal_wasi.c
++        pal_threading.c
++        pal_uid_wasi.c
++    )   
++else()
++    list (APPEND NATIVE_SOURCES
++        pal_dynamicload.c
++        pal_mount.c
++        pal_process.c
++        pal_signal.c
++        pal_threading.c
++        pal_uid.c
++    )    
+ endif()
+ 
+ if (CLR_CMAKE_TARGET_APPLE)
+@@ -75,14 +84,14 @@ else()
+         pal_log.c
+         pal_iossupportversion.c)
+ 
+-    if (CLR_CMAKE_TARGET_WASI)
++    if (CLR_CMAKE_TARGET_WASI OR CLR_CMAKE_TARGET_LIBNX)
+         list (APPEND NATIVE_SOURCES pal_console_wasi.c)
+     else()
+         list (APPEND NATIVE_SOURCES pal_console.c)
+     endif()
+ endif()
+ 
+-if (NOT CLR_CMAKE_TARGET_BROWSER AND NOT CLR_CMAKE_TARGET_WASI)
++if (NOT CLR_CMAKE_TARGET_BROWSER AND NOT CLR_CMAKE_TARGET_WASI AND NOT CLR_CMAKE_TARGET_LIBNX)
+     list (APPEND NATIVE_SOURCES pal_networkchange.c)
+ endif ()
+ 
+diff --git a/src/native/libs/System.Native/pal_console.c b/src/native/libs/System.Native/pal_console.c
+index b51e16c0b..67cfd38d7 100644
+--- a/src/native/libs/System.Native/pal_console.c
++++ b/src/native/libs/System.Native/pal_console.c
+@@ -13,7 +13,9 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/ioctl.h>
++
+ #include <termios.h>
++
+ #include <unistd.h>
+ #include <poll.h>
+ #include <pthread.h>
+diff --git a/src/native/libs/System.Native/pal_interfaceaddresses.c b/src/native/libs/System.Native/pal_interfaceaddresses.c
+index fe42cd91d..208067a7e 100644
+--- a/src/native/libs/System.Native/pal_interfaceaddresses.c
++++ b/src/native/libs/System.Native/pal_interfaceaddresses.c
+@@ -53,10 +53,11 @@
+ #else
+ #include <linux/if_packet.h>
+ #endif
+-#elif defined(AF_LINK)
++#elif defined(AF_LINK) && !defined(TARGET_LIBNX)
+ #include <net/if_dl.h>
+ #include <net/if_types.h>
+-#elif defined(TARGET_WASI)
++#elif defined(TARGET_WASI) || defined(TARGET_LIBNX)
++#undef HAVE_RT_MSGHDR
+ #else
+ #error System must have AF_PACKET or AF_LINK.
+ #endif
+diff --git a/src/native/libs/System.Native/pal_io.c b/src/native/libs/System.Native/pal_io.c
+index 75539069a..9666bf3cb 100644
+--- a/src/native/libs/System.Native/pal_io.c
++++ b/src/native/libs/System.Native/pal_io.c
+@@ -16,7 +16,10 @@
+ #include <stddef.h>
+ #include <stdio.h>
+ #include <stdlib.h>
++#if !defined(TARGET_LIBNX)
+ #include <sys/mman.h>
++#include <sys/uio.h>
++#endif
+ #include <sys/stat.h>
+ #include <sys/time.h>
+ #include <sys/types.h>
+@@ -26,7 +29,6 @@
+ #if !HAVE_MAKEDEV_FILEH && HAVE_MAKEDEV_SYSMACROSH
+ #include <sys/sysmacros.h>
+ #endif
+-#include <sys/uio.h>
+ #if HAVE_SYSLOG_H
+ #include <syslog.h>
+ #endif
+@@ -749,7 +751,7 @@ int32_t SystemNative_FSync(intptr_t fd)
+ int32_t SystemNative_FLock(intptr_t fd, int32_t operation)
+ {
+     int32_t result;
+-#if !defined(TARGET_WASI)
++#if !defined(TARGET_WASI) && !defined(TARGET_LIBNX)
+     while ((result = flock(ToFileDescriptor(fd), operation)) < 0 && errno == EINTR);
+ #else /* TARGET_WASI */
+     result = EINTR;
+@@ -804,7 +806,7 @@ int32_t SystemNative_SymLink(const char* target, const char* linkPath)
+ 
+ void SystemNative_GetDeviceIdentifiers(uint64_t dev, uint32_t* majorNumber, uint32_t* minorNumber)
+ {
+-#if !defined(TARGET_WASI)
++#if !defined(TARGET_WASI) && !defined(TARGET_LIBNX)
+     dev_t castedDev = (dev_t)dev;
+     *majorNumber = (uint32_t)major(castedDev);
+     *minorNumber = (uint32_t)minor(castedDev);
+@@ -817,7 +819,7 @@ void SystemNative_GetDeviceIdentifiers(uint64_t dev, uint32_t* majorNumber, uint
+ 
+ int32_t SystemNative_MkNod(const char* pathName, uint32_t mode, uint32_t major, uint32_t minor)
+ {
+-#if !defined(TARGET_WASI)
++#if !defined(TARGET_WASI) && !defined(TARGET_LIBNX)
+     dev_t dev = (dev_t)makedev(major, minor);
+ 
+     int32_t result;
+@@ -830,7 +832,7 @@ int32_t SystemNative_MkNod(const char* pathName, uint32_t mode, uint32_t major,
+ 
+ int32_t SystemNative_MkFifo(const char* pathName, uint32_t mode)
+ {
+-#if !defined(TARGET_WASI)
++#if !defined(TARGET_WASI) && !defined(TARGET_LIBNX)
+     int32_t result;
+     while ((result = mkfifo(pathName, (mode_t)mode)) < 0 && errno == EINTR);
+     return result;
+@@ -889,7 +891,7 @@ intptr_t SystemNative_MksTemps(char* pathTemplate, int32_t suffixLength)
+     {
+         pathTemplate[firstSuffixIndex] = firstSuffixChar;
+     }
+-#elif TARGET_WASI
++#elif TARGET_WASI || TARGET_LIBNX
+     assert_msg(false, "Not supported on WASI", 0);
+     result = -1;
+ #else
+@@ -898,6 +900,7 @@ intptr_t SystemNative_MksTemps(char* pathTemplate, int32_t suffixLength)
+     return  result;
+ }
+ 
++#if !defined(TARGET_LIBNX)
+ static int32_t ConvertMMapProtection(int32_t protection)
+ {
+     if (protection == PAL_PROT_NONE)
+@@ -1005,6 +1008,29 @@ void* SystemNative_MMap(void* address,
+     assert(ret != NULL);
+     return ret;
+ }
++#else
++void* SystemNative_MMap(void* address,
++                      uint64_t length,
++                      int32_t protection, // bitwise OR of PAL_PROT_*
++                      int32_t flags,      // bitwise OR of PAL_MAP_*, but PRIVATE and SHARED are mutually exclusive.
++                      intptr_t fd,
++                      int64_t offset)
++{
++    if (length > SIZE_MAX)
++    {
++        errno = ERANGE;
++        return NULL;
++    }
++
++    if (protection & PAL_PROT_EXEC || fd > 0)
++    {
++        errno = EINVAL;
++        return NULL;
++    }
++
++    return malloc(length);
++}
++#endif
+ 
+ int32_t SystemNative_MUnmap(void* address, uint64_t length)
+ {
+@@ -1014,7 +1040,12 @@ int32_t SystemNative_MUnmap(void* address, uint64_t length)
+         return -1;
+     }
+ 
++#if defined(TARGET_LIBNX)
++    free(address);
++    return 0;
++#else
+     return munmap(address, (size_t)length);
++#endif
+ }
+ 
+ int32_t SystemNative_MProtect(void* address, uint64_t length, int32_t protection)
+@@ -1025,9 +1056,18 @@ int32_t SystemNative_MProtect(void* address, uint64_t length, int32_t protection
+         return -1;
+     }
+ 
+-    protection = ConvertMMapProtection(protection);
++#if defined(TARGET_LIBNX)
++    if (protection & PAL_PROT_EXEC)
++    {
++        errno = EINVAL;
++        return -1;
++    }
+ 
++    return 0;
++#else
++    protection = ConvertMMapProtection(protection);
+     return mprotect(address, (size_t)length, protection);
++#endif
+ }
+ 
+ int32_t SystemNative_MAdvise(void* address, uint64_t length, int32_t advice)
+@@ -1041,7 +1081,7 @@ int32_t SystemNative_MAdvise(void* address, uint64_t length, int32_t advice)
+     switch (advice)
+     {
+         case PAL_MADV_DONTFORK:
+-#if defined(MADV_DONTFORK) && !defined(TARGET_WASI)
++#if defined(MADV_DONTFORK) && !defined(TARGET_WASI) 
+             return madvise(address, (size_t)length, MADV_DONTFORK);
+ #else
+             (void)address, (void)length, (void)advice;
+@@ -1064,7 +1104,8 @@ int32_t SystemNative_MSync(void* address, uint64_t length, int32_t flags)
+         errno = ERANGE;
+         return -1;
+     }
+-
++    
++#if !defined(TARGET_WASI) && !defined(TARGET_LIBNX)
+     flags = ConvertMSyncFlags(flags);
+     if (flags == -1)
+     {
+@@ -1072,7 +1113,6 @@ int32_t SystemNative_MSync(void* address, uint64_t length, int32_t flags)
+         return -1;
+     }
+ 
+-#if !defined(TARGET_WASI)
+     return msync(address, (size_t)length, flags);
+ #else
+     return -1;
+@@ -1081,6 +1121,7 @@ int32_t SystemNative_MSync(void* address, uint64_t length, int32_t flags)
+ 
+ int64_t SystemNative_SysConf(int32_t name)
+ {
++    #if !defined(TARGET_LIBNX)
+     switch (name)
+     {
+         case PAL_SC_CLK_TCK:
+@@ -1090,6 +1131,7 @@ int64_t SystemNative_SysConf(int32_t name)
+         default:
+             break; // fall through to error
+     }
++    #endif
+ 
+     assert_msg(false, "Unknown SysConf name", (int)name);
+     errno = EINVAL;
+@@ -1218,7 +1260,7 @@ int32_t SystemNative_RmDir(const char* path)
+ 
+ void SystemNative_Sync(void)
+ {
+-#if !defined(TARGET_WASI)
++#if !defined(TARGET_WASI) && !defined(TARGET_LIBNX)
+     sync();
+ #endif /* TARGET_WASI */
+ }
+@@ -1565,7 +1607,7 @@ static int16_t ConvertLockType(int16_t managedLockType)
+     }
+ }
+ 
+-#if !HAVE_NON_LEGACY_STATFS || defined(TARGET_APPLE) || defined(TARGET_FREEBSD)
++#if !HAVE_NON_LEGACY_STATFS || defined(TARGET_APPLE) || defined(TARGET_FREEBSD) || defined(TARGET_LIBNX)
+ static uint32_t MapFileSystemNameToEnum(const char* fileSystemName)
+ {
+     uint32_t result = 0;
+@@ -1726,6 +1768,9 @@ uint32_t SystemNative_GetFileSystemType(intptr_t fd)
+ #endif
+ #elif defined(TARGET_WASI)
+     return EINTR;
++#elif defined(TARGET_LIBNX)
++    // On libnx, we don't have a way to get the filesystem type.
++    return MapFileSystemNameToEnum("fat");
+ #elif !HAVE_NON_LEGACY_STATFS
+     int statfsRes;
+     struct statvfs statfsArgs;
+diff --git a/src/native/libs/System.Native/pal_maphardwaretype.c b/src/native/libs/System.Native/pal_maphardwaretype.c
+index 2a9e78216..2e8a6b1d2 100644
+--- a/src/native/libs/System.Native/pal_maphardwaretype.c
++++ b/src/native/libs/System.Native/pal_maphardwaretype.c
+@@ -18,10 +18,10 @@
+ #else
+ #include <linux/if_arp.h>
+ #endif
+-#elif defined(AF_LINK)
++#elif defined(AF_LINK) && !defined(TARGET_LIBNX)
+ #include <net/if_dl.h>
+ #include <net/if_types.h>
+-#elif defined(TARGET_WASI)
++#elif defined(TARGET_WASI) || defined(TARGET_LIBNX)
+ #else
+ #error System must have AF_PACKET or AF_LINK.
+ #endif
+@@ -61,7 +61,7 @@ uint16_t MapHardwareType(uint16_t nativeType)
+         default:
+             return NetworkInterfaceType_Unknown;
+     }
+-#elif defined(AF_LINK)
++#elif defined(AF_LINK) && !defined(TARGET_LIBNX)
+     switch (nativeType)
+     {
+         case IFT_ETHER:
+@@ -113,7 +113,7 @@ uint16_t MapHardwareType(uint16_t nativeType)
+         default:
+             return NetworkInterfaceType_Unknown;
+     }
+-#elif defined(TARGET_WASI)
++#elif defined(TARGET_WASI) || defined(TARGET_LIBNX)
+     return NetworkInterfaceType_Unknown;
+ #endif
+ }
+diff --git a/src/native/libs/System.Native/pal_memory.c b/src/native/libs/System.Native/pal_memory.c
+index d3b852dd3..e0eae2bc9 100644
+--- a/src/native/libs/System.Native/pal_memory.c
++++ b/src/native/libs/System.Native/pal_memory.c
+@@ -17,7 +17,7 @@
+ #elif HAVE_MALLOC_USABLE_SIZE_NP
+     #include <malloc_np.h>
+     #define MALLOC_SIZE(s) malloc_usable_size(s)
+-#elif defined(TARGET_SUNOS)
++#elif defined(TARGET_SUNOS) || defined(TARGET_LIBNX)
+     #define MALLOC_SIZE(s) (*((size_t*)(s)-1))
+ #else
+     #error "Platform doesn't support malloc_usable_size or malloc_size"
+diff --git a/src/native/libs/System.Native/pal_networking.c b/src/native/libs/System.Native/pal_networking.c
+index 8abf91164..e09f09047 100644
+--- a/src/native/libs/System.Native/pal_networking.c
++++ b/src/native/libs/System.Native/pal_networking.c
+@@ -43,7 +43,11 @@
+ #if HAVE_SYS_SOCKIO_H
+ #include <sys/sockio.h>
+ #endif
++#if defined(TARGET_LIBNX)
++#define DISABLE_IPV6 1
++#else
+ #include <sys/un.h>
++#endif
+ #if defined(__APPLE__) && __APPLE__
+ #include <sys/socketvar.h>
+ #endif
+@@ -667,6 +671,9 @@ int32_t SystemNative_GetDomainName(uint8_t* name, int32_t nameLength)
+     (void)nameLength;
+     *name = '\0';
+     return 0;
++#elif TARGET_LIBNX
++    // On libnx, there's no getdomainname but we can use the host name from the socket
++    return SystemNative_GetHostName(name, nameLength);
+ #else
+     // GetDomainName is not supported on this platform.
+     errno = ENOTSUP;
+@@ -706,7 +713,12 @@ int32_t SystemNative_GetSocketAddressSizes(int32_t* ipv4SocketAddressSize, int32
+ 
+     *ipv4SocketAddressSize = sizeof(struct sockaddr_in);
+     *ipv6SocketAddressSize = sizeof(struct sockaddr_in6);
++    #if defined(TARGET_LIBNX)
++    // We don't support UDS on libnx, however 0 will trigger an assert in the managed code
++    *udsSocketAddressSize = sizeof(struct sockaddr_in);
++    #else
+     *udsSocketAddressSize = sizeof(struct sockaddr_un);
++    #endif
+     *maxSocketAddressSize = sizeof(struct sockaddr_storage);
+     return Error_SUCCESS;
+ }
+@@ -911,6 +923,9 @@ int32_t SystemNative_GetIPv6Address(
+ int32_t
+ SystemNative_SetIPv6Address(uint8_t* socketAddress, int32_t socketAddressLen, uint8_t* address, int32_t addressLen, uint32_t scopeId)
+ {
++#if DISABLE_IPV6
++    return Error_EAFNOSUPPORT;
++#else
+     if (socketAddress == NULL || address == NULL || socketAddressLen < 0 ||
+         (size_t)socketAddressLen < sizeof(struct sockaddr_in6) || addressLen < NUM_BYTES_IN_IPV6_ADDRESS)
+     {
+@@ -935,6 +950,7 @@ SystemNative_SetIPv6Address(uint8_t* socketAddress, int32_t socketAddressLen, ui
+     inet6SockAddr->sin6_scope_id = scopeId;
+ 
+     return Error_SUCCESS;
++#endif
+ }
+ 
+ #if defined(CMSG_SPACE)
+@@ -972,7 +988,16 @@ int32_t SystemNative_GetControlMessageBufferSize(int32_t isIPv4, int32_t isIPv6)
+     //       AF_INET nor AF_INET6. In this case both inputs will be 0 and
+     //       the control message buffer size should be zero.
+ #if defined(CMSG_SPACE)
+-    return (isIPv4 != 0 ? CMSG_SPACE(sizeof(struct in_pktinfo)) : 0) + (isIPv6 != 0 ? CMSG_SPACE(sizeof(struct in6_pktinfo)) : 0);
++    int32_t total = 0;
++    if (isIPv4 != 0)
++        total += CMSG_SPACE(sizeof(struct in_pktinfo));
++#if !DISABLE_IPV6
++    if (isIPv6 != 0)
++        total += CMSG_SPACE(sizeof(struct in6_pktinfo));
++#else
++    (void)isIPv6;
++#endif
++    return total;
+ #else // CMSG_SPACE
+     (void)isIPv4;
+     (void)isIPv6;
+@@ -1027,6 +1052,9 @@ static int32_t GetIPv6PacketInformation(struct cmsghdr* controlMessage, IPPacket
+     assert(controlMessage != NULL);
+     assert(packetInfo != NULL);
+ 
++#if DISABLE_IPV6
++    return 0;
++#else
+     if (controlMessage->cmsg_len < sizeof(struct in6_pktinfo))
+     {
+         assert(false && "expected a control message large enough to hold an in6_pktinfo value");
+@@ -1039,6 +1067,7 @@ static int32_t GetIPv6PacketInformation(struct cmsghdr* controlMessage, IPPacket
+     packetInfo->InterfaceIndex = (int32_t)pktinfo->ipi6_ifindex;
+ 
+     return 1;
++#endif
+ }
+ 
+ static struct cmsghdr* GET_CMSG_NXTHDR(struct msghdr* mhdr, struct cmsghdr* cmsg)
+@@ -1085,6 +1114,9 @@ SystemNative_TryGetIPPacketInformation(MessageHeader* messageHeader, int32_t isI
+     }
+     else
+     {
++#if DISABLE_IPV6
++        return 0;
++#else
+         for (; controlMessage != NULL && controlMessage->cmsg_len > 0;
+              controlMessage = GET_CMSG_NXTHDR(&header, controlMessage))
+         {
+@@ -1093,6 +1125,7 @@ SystemNative_TryGetIPPacketInformation(MessageHeader* messageHeader, int32_t isI
+                 return GetIPv6PacketInformation(controlMessage, packetInfo);
+             }
+         }
++#endif
+     }
+ 
+     return 0;
+@@ -1239,6 +1272,9 @@ int32_t SystemNative_GetIPv6MulticastOption(intptr_t socket, int32_t multicastOp
+         return Error_EFAULT;
+     }
+ 
++#if DISABLE_IPV6
++    return Error_EAFNOSUPPORT;
++#else
+     int fd = ToFileDescriptor(socket);
+ 
+     int optionName;
+@@ -1258,6 +1294,7 @@ int32_t SystemNative_GetIPv6MulticastOption(intptr_t socket, int32_t multicastOp
+     ConvertIn6AddrToByteArray(&option->Address.Address[0], NUM_BYTES_IN_IPV6_ADDRESS, &opt.ipv6mr_multiaddr);
+     option->InterfaceIndex = (int32_t)opt.ipv6mr_interface;
+     return Error_SUCCESS;
++#endif
+ }
+ 
+ int32_t SystemNative_SetIPv6MulticastOption(intptr_t socket, int32_t multicastOption, IPv6MulticastOption* option)
+@@ -1267,6 +1304,9 @@ int32_t SystemNative_SetIPv6MulticastOption(intptr_t socket, int32_t multicastOp
+         return Error_EFAULT;
+     }
+ 
++#if DISABLE_IPV6
++    return Error_EAFNOSUPPORT;
++#else
+     int fd = ToFileDescriptor(socket);
+ 
+     int optionName;
+@@ -1289,6 +1329,7 @@ int32_t SystemNative_SetIPv6MulticastOption(intptr_t socket, int32_t multicastOp
+ 
+     int err = setsockopt(fd, IPPROTO_IPV6, optionName, &opt, sizeof(opt));
+     return err == 0 ? Error_SUCCESS : SystemNative_ConvertErrorPlatformToPal(errno);
++#endif
+ }
+ 
+ #if defined(__APPLE__) && __APPLE__
+@@ -2108,6 +2149,9 @@ static bool TryGetPlatformSocketOption(int32_t socketOptionLevel, int32_t socket
+             }
+ 
+         case SocketOptionLevel_SOL_IPV6:
++        #if DISABLE_IPV6
++            return false;
++        #else
+             *optLevel = IPPROTO_IPV6;
+ 
+             switch (socketOptionName)
+@@ -2144,7 +2188,7 @@ static bool TryGetPlatformSocketOption(int32_t socketOptionLevel, int32_t socket
+                 default:
+                     return false;
+             }
+-
++        #endif
+         case SocketOptionLevel_SOL_TCP:
+             *optLevel = IPPROTO_TCP;
+ 
+@@ -3538,6 +3582,11 @@ void SystemNative_GetDomainSocketSizes(int32_t* pathOffset, int32_t* pathSize, i
+     assert(pathSize != NULL);
+     assert(addressSize != NULL);
+ 
++#if defined(TARGET_LIBNX)
++    *pathOffset = 0;
++    *pathSize = 0;
++    *addressSize = 0;
++#else
+     struct sockaddr_un domainSocket;
+ 
+ #if HAVE_SOCKADDR_UN_SUN_PATH
+@@ -3548,6 +3597,7 @@ void SystemNative_GetDomainSocketSizes(int32_t* pathOffset, int32_t* pathSize, i
+     *pathSize = 0;
+ #endif // HAVE_SOCKADDR_UN_SUN_PATH
+     *addressSize = sizeof(domainSocket);
++#endif
+ }
+ 
+ int32_t SystemNative_GetMaximumAddressSize(void)
+@@ -3726,7 +3776,10 @@ error:
+ 
+ uint32_t SystemNative_InterfaceNameToIndex(char* interfaceName)
+ {
+-#if HAVE_NET_IF_H
++#if TARGET_LIBNX
++    assert(interfaceName != NULL);
++    return Error_EINVAL;
++#elif HAVE_NET_IF_H
+     assert(interfaceName != NULL);
+     if (interfaceName[0] == '%')
+         interfaceName++;
+diff --git a/src/native/libs/System.Native/pal_process_libnx.c b/src/native/libs/System.Native/pal_process_libnx.c
+new file mode 100644
+index 000000000..6f7b6a1eb
+--- /dev/null
++++ b/src/native/libs/System.Native/pal_process_libnx.c
+@@ -0,0 +1,132 @@
++// Licensed to the .NET Foundation under one or more agreements.
++// The .NET Foundation licenses this file to you under the MIT license.
++
++#include "pal_config.h"
++#include "pal_process.h"
++#include "pal_io.h"
++#include "pal_utilities.h"
++
++#include <assert.h>
++#include <errno.h>
++#include <limits.h>
++#include <signal.h>
++#include <stdlib.h>
++#include <sys/resource.h>
++#include <sys/types.h>
++#include <unistd.h>
++
++#include <switch.h>
++
++#include <minipal/getexepath.h>
++
++int32_t SystemNative_ForkAndExecProcess(const char* filename,
++                                      char* const argv[],
++                                      char* const envp[],
++                                      const char* cwd,
++                                      int32_t redirectStdin,
++                                      int32_t redirectStdout,
++                                      int32_t redirectStderr,
++                                      int32_t setCredentials,
++                                      uint32_t userId,
++                                      uint32_t groupId,
++                                      uint32_t* groups,
++                                      int32_t groupsLength,
++                                      int32_t* childPid,
++                                      int32_t* stdinFd,
++                                      int32_t* stdoutFd,
++                                      int32_t* stderrFd)
++{
++    return -1;
++}
++
++int32_t SystemNative_GetRLimit(RLimitResources resourceType, RLimit* limits)
++{
++    assert(limits != NULL);
++    int result = -1;
++    memset(limits, 0, sizeof(RLimit));
++    return result;
++}
++
++int32_t SystemNative_SetRLimit(RLimitResources resourceType, const RLimit* limits)
++{
++    assert(limits != NULL);
++    return -1;
++}
++
++int32_t SystemNative_Kill(int32_t pid, int32_t signal)
++{
++    return -1;
++}
++
++int32_t SystemNative_GetPid(void)
++{
++    return -1;
++}
++
++int32_t SystemNative_GetSid(int32_t pid)
++{
++    return -1;
++}
++
++void SystemNative_SysLog(SysLogPriority priority, const char* message, const char* arg1)
++{
++    if (message)
++        svcOutputDebugString(message, strlen(message));
++    if (arg1)
++        svcOutputDebugString(arg1, strlen(arg1));
++}
++
++int32_t SystemNative_WaitIdAnyExitedNoHangNoWait(void)
++{
++    return -1;
++}
++
++int32_t SystemNative_WaitPidExitedNoHang(int32_t pid, int32_t* exitCode)
++{
++    return -1;
++}
++
++int64_t SystemNative_PathConf(const char* path, PathConfName name)
++{
++    return -1;
++}
++
++int32_t SystemNative_GetPriority(PriorityWhich which, int32_t who)
++{
++    return -1;
++}
++
++int32_t SystemNative_SetPriority(PriorityWhich which, int32_t who, int32_t nice)
++{
++    return -1;
++}
++
++char* SystemNative_GetCwd(char* buffer, int32_t bufferSize)
++{
++    assert(bufferSize >= 0);
++
++    if (bufferSize < 0)
++    {
++        errno = EINVAL;
++        return NULL;
++    }
++
++    return getcwd(buffer, Int32ToSizeT(bufferSize));
++}
++
++int32_t SystemNative_SchedSetAffinity(int32_t pid, intptr_t* mask)
++{
++    errno = ENOTSUP;
++    return -1;
++}
++
++int32_t SystemNative_SchedGetAffinity(int32_t pid, intptr_t* mask)
++{
++    errno = ENOTSUP;
++    return -1;
++}
++
++char* SystemNative_GetProcessPath(void)
++{
++    return minipal_getexepath();
++}
+diff --git a/src/native/libs/System.Native/pal_runtimeinformation.c b/src/native/libs/System.Native/pal_runtimeinformation.c
+index 407682cdb..8ca5af230 100644
+--- a/src/native/libs/System.Native/pal_runtimeinformation.c
++++ b/src/native/libs/System.Native/pal_runtimeinformation.c
+@@ -7,7 +7,11 @@
+ #include <assert.h>
+ #include <stdio.h>
+ #include <string.h>
++
++#if !defined(TARGET_LIBNX)
+ #include <sys/utsname.h>
++#endif
++
+ #if defined(TARGET_ANDROID)
+ #include <sys/system_properties.h>
+ #elif defined(TARGET_OSX)
+@@ -16,6 +20,32 @@
+ #include <sys/systeminfo.h>
+ #endif
+ 
++#if defined(TARGET_LIBNX)
++struct utsname {
++    char sysname[100];
++    char nodename[100];
++    char release[100];
++    char version[100];
++    char machine[100];
++};
++
++int uname(struct utsname* name)
++{
++    if (name == NULL)
++    {
++        return -1;
++    }
++
++    strcpy(name->sysname, "libnx");
++    strcpy(name->nodename, "libnx");
++    strcpy(name->release, "1.0.0");
++    strcpy(name->version, "1.0.0");
++    strcpy(name->machine, "libnx");
++
++    return 0;
++}
++#endif
++
+ char* SystemNative_GetUnixRelease(void)
+ {
+ #if defined(TARGET_ANDROID)
+diff --git a/src/native/libs/System.Native/pal_threading.c b/src/native/libs/System.Native/pal_threading.c
+index 860be7121..22264be4d 100644
+--- a/src/native/libs/System.Native/pal_threading.c
++++ b/src/native/libs/System.Native/pal_threading.c
+@@ -23,6 +23,11 @@
+ #endif
+ #include <pthread.h>
+ 
++#if defined(TARGET_LIBNX)
++#define PTHREAD_STACK_MIN 0x1000
++#include <switch.h>
++#endif
++
+ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ // LowLevelMonitor - Represents a non-recursive mutex and condition
+ 
+diff --git a/src/native/libs/System.Native/pal_time.c b/src/native/libs/System.Native/pal_time.c
+index 0f37ddbe0..12266c13d 100644
+--- a/src/native/libs/System.Native/pal_time.c
++++ b/src/native/libs/System.Native/pal_time.c
+@@ -56,7 +56,9 @@ int32_t SystemNative_FUTimens(intptr_t fd, TimeSpec* times)
+ {
+     int32_t result;
+ 
+-#if HAVE_FUTIMENS
++#ifdef TARGET_LIBNX
++    result = -1;
++#elif HAVE_FUTIMENS
+     struct timespec updatedTimes[2];
+     updatedTimes[0].tv_sec = (time_t)times[0].tv_sec;
+     updatedTimes[0].tv_nsec = (long)times[0].tv_nsec;
+@@ -114,7 +116,7 @@ int64_t SystemNative_GetBootTimeTicks(void)
+ 
+ double SystemNative_GetCpuUtilization(ProcessCpuInformation* previousCpuInfo)
+ {
+-#if defined(HAVE_GETRUSAGE)
++#if defined(HAVE_GETRUSAGE) && !defined(TARGET_LIBNX)
+     uint64_t kernelTime = 0;
+     uint64_t userTime = 0;
+ 
+@@ -163,6 +165,14 @@ double SystemNative_GetCpuUtilization(ProcessCpuInformation* previousCpuInfo)
+     previousCpuInfo->lastRecordedKernelTime = kernelTime;
+ 
+     return cpuUtilization;
++#elif defined(TARGET_LIBNX)
++    // It seems there is no way around this, even when marked as unsupported it keeps getting called by something
++    // Implement it as a stub
++    uint64_t currentTime = SystemNative_GetTimestamp();
++    previousCpuInfo->lastRecordedCurrentTime = currentTime;
++    previousCpuInfo->lastRecordedUserTime = currentTime;
++    previousCpuInfo->lastRecordedKernelTime = 0;
++    return 60;
+ #else
+     (void)previousCpuInfo; // unused
+     assert(false);
+diff --git a/src/native/libs/configure.cmake b/src/native/libs/configure.cmake
+index a8c20b627..1a3e5804c 100644
+--- a/src/native/libs/configure.cmake
++++ b/src/native/libs/configure.cmake
+@@ -570,7 +570,7 @@ elseif(CLR_CMAKE_TARGET_ANDROID)
+ elseif(CLR_CMAKE_TARGET_WASI)
+     set(HAVE_FORK 0)
+     unset(HAVE_GETNAMEINFO) # WASIp2 libc has empty function with TODO and abort()
+-elseif(CLR_CMAKE_TARGET_BROWSER)
++elseif(CLR_CMAKE_TARGET_BROWSER OR CLR_CMAKE_TARGET_LIBNX)
+     set(HAVE_FORK 0)
+ else()
+     check_symbol_exists(
+@@ -650,7 +650,7 @@ elseif (HAVE_PTHREAD_IN_LIBC)
+   set(PTHREAD_LIBRARY c)
+ endif()
+ 
+-if (NOT CLR_CMAKE_TARGET_WASI)
++if (NOT CLR_CMAKE_TARGET_WASI AND NOT CLR_CMAKE_TARGET_LIBNX)
+     check_library_exists(${PTHREAD_LIBRARY} pthread_condattr_setclock "" HAVE_PTHREAD_CONDATTR_SETCLOCK)
+ endif()
+ 
+@@ -775,7 +775,7 @@ check_c_source_compiles(
+     "
+     HAVE_MKSTEMP)
+ 
+-if (NOT HAVE_MKSTEMPS AND NOT HAVE_MKSTEMP AND NOT CLR_CMAKE_TARGET_WASI)
++if (NOT HAVE_MKSTEMPS AND NOT HAVE_MKSTEMP AND NOT CLR_CMAKE_TARGET_WASI AND NOT CLR_CMAKE_TARGET_LIBNX)
+     message(FATAL_ERROR "Cannot find mkstemps nor mkstemp on this platform.")
+ endif()
+ 
+@@ -1017,7 +1017,7 @@ set (CMAKE_REQUIRED_LIBRARIES ${PREVIOUS_CMAKE_REQUIRED_LIBRARIES})
+ set (HAVE_INOTIFY 0)
+ if (HAVE_INOTIFY_INIT AND HAVE_INOTIFY_ADD_WATCH AND HAVE_INOTIFY_RM_WATCH)
+     set (HAVE_INOTIFY 1)
+-elseif (CLR_CMAKE_TARGET_LINUX AND NOT CLR_CMAKE_TARGET_BROWSER AND NOT CLR_CMAKE_TARGET_WASI)
++elseif (CLR_CMAKE_TARGET_LINUX AND NOT CLR_CMAKE_TARGET_BROWSER AND NOT CLR_CMAKE_TARGET_WASI AND NOT CLR_CMAKE_TARGET_LIBNX)
+     message(FATAL_ERROR "Cannot find inotify functions on a Linux platform.")
+ endif()
+ 
+@@ -1102,7 +1102,7 @@ check_symbol_exists(
+     sys/sysmacros.h
+     HAVE_MAKEDEV_SYSMACROSH)
+ 
+-if (NOT HAVE_MAKEDEV_FILEH AND NOT HAVE_MAKEDEV_SYSMACROSH AND NOT CLR_CMAKE_TARGET_WASI AND NOT CLR_CMAKE_TARGET_HAIKU)
++if (NOT HAVE_MAKEDEV_FILEH AND NOT HAVE_MAKEDEV_SYSMACROSH AND NOT CLR_CMAKE_TARGET_WASI AND NOT CLR_CMAKE_TARGET_HAIKU AND NOT CLR_CMAKE_TARGET_LIBNX)
+   message(FATAL_ERROR "Cannot find the makedev function on this platform.")
+ endif()
+ 
+diff --git a/src/native/minipal/random.c b/src/native/minipal/random.c
+index 3c2b33ac7..588f204dd 100644
+--- a/src/native/minipal/random.c
++++ b/src/native/minipal/random.c
+@@ -23,6 +23,10 @@
+ 
+ #include "random.h"
+ 
++#if TARGET_LIBNX
++#include <switch.h>
++#endif
++
+ /*
+ 
+ Generate random bytes. The generated bytes are not cryptographically strong.
+@@ -77,6 +81,15 @@ int32_t minipal_get_cryptographically_secure_random_bytes(uint8_t* buffer, int32
+ {
+     assert(buffer != NULL);
+ 
++#ifdef TARGET_LIBNX
++    if (R_FAILED(csrngGetRandomBytes(buffer, bufferLength)))
++    {
++        randomGet(buffer, bufferLength);
++    }
++    
++    return 0;
++#endif
++
+ #ifdef __EMSCRIPTEN__
+     extern int32_t mono_wasm_browser_entropy(uint8_t* buffer, int32_t bufferLength);
+     static bool sMissingBrowserCrypto;
+diff --git a/src/native/minipal/thread.h b/src/native/minipal/thread.h
+index b5532c315..a5d3676cd 100644
+--- a/src/native/minipal/thread.h
++++ b/src/native/minipal/thread.h
+@@ -66,6 +66,8 @@ static inline size_t minipal_get_current_thread_id_no_cache(void)
+     tid = (size_t)pthread_self();
+ #elif defined(__wasm)
+     tid = (size_t)(void*)pthread_self();
++#elif defined(__SWITCH__)
++    tid = (size_t)(void*)pthread_self();
+ #else
+ #error "Unsupported platform"
+ #endif
+diff --git a/src/tests/JIT/Directed/StructABI/StructABI.csproj b/src/tests/JIT/Directed/StructABI/StructABI.csproj
+index 4aa1a8703..83c6810da 100644
+--- a/src/tests/JIT/Directed/StructABI/StructABI.csproj
++++ b/src/tests/JIT/Directed/StructABI/StructABI.csproj
+@@ -11,7 +11,7 @@
+   <ItemGroup>
+     <Compile Include="StructABI.cs" />
+     <Compile Include="StructABI.Windows.cs" Condition="'$(TargetOS)' == 'windows'" />
+-    <Compile Include="StructABI.Unix.cs" Condition="'$(TargetOS)' == 'linux' Or '$(TargetOS)' == 'freebsd' Or '$(TargetOS)' == 'netbsd' Or '$(TargetOS)' == 'illumos' Or '$(TargetOS)' == 'solaris' Or '$(TargetOS)' == 'haiku'" />
++    <Compile Include="StructABI.Unix.cs" Condition="'$(TargetOS)' == 'linux' Or '$(TargetOS)' == 'freebsd' Or '$(TargetOS)' == 'netbsd' Or '$(TargetOS)' == 'illumos' Or '$(TargetOS)' == 'solaris' Or '$(TargetOS)' == 'haiku' Or '$(TargetOS)' == 'libnx'" />
+     <Compile Include="StructABI.OSX.cs" Condition="'$(TargetOS)' == 'osx'" />
+   </ItemGroup>
+   <ItemGroup>

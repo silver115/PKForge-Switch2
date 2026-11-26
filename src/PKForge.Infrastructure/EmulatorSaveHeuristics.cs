@@ -12,8 +12,9 @@ public static class EmulatorSaveHeuristics
     private static readonly string[] CandidateExtensions =
         ["", ".sav", ".srm", ".bin", ".dat", ".gci", ".dsv", ".bak", ".main"];
 
-    /// <summary>Pokémon Switch title IDs, for friendly labels on Eden hits. Display-only.</summary>
-    private static readonly Dictionary<string, string> SwitchTitles = new(StringComparer.OrdinalIgnoreCase)
+    /// <summary>Pokémon Switch title IDs, for friendly labels on Eden hits. The Switch 2 build also
+    /// uses it as the allow-list of console saves it may open.</summary>
+    public static readonly IReadOnlyDictionary<string, string> SwitchTitles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         ["010003F003A34000"] = "Let's Go Pikachu",
         ["0100187003A36000"] = "Let's Go Eevee",
@@ -21,7 +22,7 @@ public static class EmulatorSaveHeuristics
         ["01008DB008C2C000"] = "Shield",
         ["0100000011D90000"] = "Brilliant Diamond",
         ["010018E011D92000"] = "Shining Pearl",
-        ["01001F5010B28000"] = "Legends: Arceus",
+        ["01001F5010DFA000"] = "Legends: Arceus",
         ["0100A3D008C5C000"] = "Scarlet",
         ["01008F6008C5E000"] = "Violet",
         ["0100F43008C44000"] = "Legends: Z-A",

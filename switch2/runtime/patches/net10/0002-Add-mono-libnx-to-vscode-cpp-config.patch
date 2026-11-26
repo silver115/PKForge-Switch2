@@ -1,0 +1,63 @@
+From 30eada2c06218f91286989d5d3b9095e415fe558 Mon Sep 17 00:00:00 2001
+From: exelix <13405476+exelix11@users.noreply.github.com>
+Date: Sat, 14 Feb 2026 12:05:55 +0100
+Subject: [PATCH 02/28] Add mono libnx to vscode cpp config
+
+(cherry picked from commit e2a44a4db2778e24b2bcf9961d86588562668f21)
+---
+ src/mono/.vscode/c_cpp_properties.json | 35 +++++++++++++++++++++++++-
+ 1 file changed, 34 insertions(+), 1 deletion(-)
+
+diff --git a/src/mono/.vscode/c_cpp_properties.json b/src/mono/.vscode/c_cpp_properties.json
+index 5d7b8a06a..74405752d 100644
+--- a/src/mono/.vscode/c_cpp_properties.json
++++ b/src/mono/.vscode/c_cpp_properties.json
+@@ -60,7 +60,7 @@
+                 "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include",
+                 "${workspaceRoot}",
+                 "${workspaceRoot}/mono",
+-                "${workspaceRoot}/mono/eglib",
++                "${workspaceRoot}/mono/eglib"
+             ],
+             "defines": [
+                 "_DEBUG",
+@@ -78,6 +78,39 @@
+                 "limitSymbolsToIncludedHeaders": true,
+                 "databaseFilename": ""
+             }
++        },
++        {
++            "compilerPath": "/opt/devkitpro/devkitA64/bin/aarch64-none-elf-gcc",
++            "name": "LIBNX",
++            "includePath": [
++                "${default}",
++                "/usr/include",
++                "/usr/local/include",
++                "${workspaceFolder}",
++                "${workspaceFolder}/mono",
++                "${workspaceFolder}/mono/eglib",
++                "${workspaceFolder}/../native/public/",
++                "${workspaceFolder}/../../artifacts/obj/mono/libnx.arm64.Debug/",
++                "/opt/devkitpro/libnx/include"
++            ],
++            "defines": [
++                "HOST_LIBNX=1",
++                "LIBNX=1",
++                "__SWITCH__=1"
++            ],
++            "intelliSenseMode": "linux-gcc-arm64",
++            "browse": {
++                "path": [
++                    "${default}",
++                    "/usr/include",
++                    "/usr/local/include",
++                    "${workspaceRoot}",
++                    "${workspaceRoot}/mono",
++                    "${workspaceRoot}/mono/eglib"
++                ],
++                "limitSymbolsToIncludedHeaders": true,
++                "databaseFilename": ""
++            }
+         }
+     ],
+     "version": 4

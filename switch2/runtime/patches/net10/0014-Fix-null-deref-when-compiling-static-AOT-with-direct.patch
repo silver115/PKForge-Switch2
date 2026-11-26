@@ -1,0 +1,53 @@
+From d476c1f7f4c10eb7193fcf98f686921741c853b0 Mon Sep 17 00:00:00 2001
+From: exelix <13405476+exelix11@users.noreply.github.com>
+Date: Sun, 16 Aug 2026 16:56:37 +0200
+Subject: [PATCH 14/28] Fix null deref when compiling static AOT with
+ direct-pinvoke/icalls and no dlshim
+
+(cherry picked from commit d75fa786b88e10f45ca9263773d84e47033cfb01)
+---
+ src/mono/mono/metadata/native-library.c |  2 +-
+ src/mono/mono/utils/mono-dl.c           | 10 ++++++++++
+ 2 files changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/src/mono/mono/metadata/native-library.c b/src/mono/mono/metadata/native-library.c
+index 4da973382..56a3bcbdf 100644
+--- a/src/mono/mono/metadata/native-library.c
++++ b/src/mono/mono/metadata/native-library.c
+@@ -428,7 +428,7 @@ static MonoDl* native_handle_lookup_wrapper (gpointer handle)
+ 	if (!internal_module)
+ 		netcore_lookup_self_native_handle ();
+ 
+-	if (internal_module->handle == handle) {
++	if (internal_module && internal_module->handle == handle) {
+ 		result = internal_module;
+ 	} else {
+ 		native_library_lock ();
+diff --git a/src/mono/mono/utils/mono-dl.c b/src/mono/mono/utils/mono-dl.c
+index cc4578b2c..f9ce7f067 100644
+--- a/src/mono/mono/utils/mono-dl.c
++++ b/src/mono/mono/utils/mono-dl.c
+@@ -165,6 +165,14 @@ mono_dl_open_full (const char *name, int mono_flags, int native_flags, MonoError
+ 			}
+ 		}
+ 	}
++
++#if defined(HOST_LIBNX)
++	if (!lib) {
++		mono_error_set_error (error, MONO_ERROR_FILE_NOT_FOUND, "Failed to load library %s", name);
++		g_free (module);
++		return NULL;
++	}
++#else
+ 	if (!lib && !dl_fallback) {
+ 		/* This platform does not support dlopen */
+ 		if (name == NULL) {
+@@ -179,6 +187,8 @@ mono_dl_open_full (const char *name, int mono_flags, int native_flags, MonoError
+ 		g_free (module);
+ 		return NULL;
+ 	}
++#endif
++
+ 	mono_refcount_init (module, NULL);
+ 	module->handle = lib;
+ 	module->dl_fallback = dl_fallback;

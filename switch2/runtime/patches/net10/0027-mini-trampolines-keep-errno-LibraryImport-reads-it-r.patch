@@ -1,0 +1,82 @@
+From 11e3dd6e224f6eaa48a9b99130176c2ea30ef8c6 Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Fri, 20 Nov 2026 06:42:31 +0000
+Subject: [PATCH 27/28] mini: trampolines keep errno (LibraryImport reads it
+ right after the native call)
+
+---
+ src/mono/mono/mini/mini-trampolines.c | 40 +++++++++++++++++++++++----
+ 1 file changed, 34 insertions(+), 6 deletions(-)
+
+diff --git a/src/mono/mono/mini/mini-trampolines.c b/src/mono/mono/mini/mini-trampolines.c
+index d5677c7fd..082979c7d 100644
+--- a/src/mono/mono/mini/mini-trampolines.c
++++ b/src/mono/mono/mini/mini-trampolines.c
+@@ -5,6 +5,7 @@
+  * Copyright 2011 Xamarin, Inc (http://www.xamarin.com)
+  * Licensed under the MIT license. See LICENSE file in the project root for full license information.
+  */
++#include <errno.h>
+ #include <config.h>
+ #include <glib.h>
+ 
+@@ -1170,6 +1171,33 @@ mono_delegate_trampoline (host_mgreg_t *regs, guint8 *code, gpointer *arg, guint
+  *   Return the C function which needs to be called by the generic trampoline of type
+  * TRAMP_TYPE.
+  */
++/*
++ * The generic trampolines run C code (method lookup, AOT PLT resolution, class init) between a managed call
++ * site and its target, and that code can change errno. Code generated for [LibraryImport(SetLastError = true)]
++ * reads errno with Marshal.GetLastSystemError () right after the native call, and the first call to it from a
++ * given site passes through a trampoline, so the error was lost (full AOT on libnx: Directory.CreateDirectory
++ * on an existing folder threw "Success"). Each trampoline function therefore leaves errno as it found it.
++ */
++#define KEEP_ERRNO(name, argtype) \
++static gpointer \
++name##_keep_errno (host_mgreg_t *regs, guint8 *code, argtype arg, guint8 *tramp) \
++{ \
++	int saved_errno = errno; \
++	gpointer res = name (regs, code, arg, tramp); \
++	errno = saved_errno; \
++	return res; \
++}
++#ifndef HOST_WASM
++KEEP_ERRNO (mono_magic_trampoline, gpointer)
++KEEP_ERRNO (mono_rgctx_lazy_fetch_trampoline, gpointer)
++#ifdef MONO_ARCH_AOT_SUPPORTED
++KEEP_ERRNO (mono_aot_trampoline, guint8 *)
++KEEP_ERRNO (mono_aot_plt_trampoline, guint8 *)
++#endif
++KEEP_ERRNO (mono_delegate_trampoline, gpointer *)
++KEEP_ERRNO (mono_vcall_trampoline, int)
++#endif
++
+ gconstpointer
+ mono_get_trampoline_func (MonoTrampolineType tramp_type)
+ {
+@@ -1177,19 +1205,19 @@ mono_get_trampoline_func (MonoTrampolineType tramp_type)
+ 	switch (tramp_type) {
+ 	case MONO_TRAMPOLINE_JIT:
+ 	case MONO_TRAMPOLINE_JUMP:
+-		return (gconstpointer)mono_magic_trampoline;
++		return (gconstpointer)mono_magic_trampoline_keep_errno;
+ 	case MONO_TRAMPOLINE_RGCTX_LAZY_FETCH:
+-		return (gconstpointer)mono_rgctx_lazy_fetch_trampoline;
++		return (gconstpointer)mono_rgctx_lazy_fetch_trampoline_keep_errno;
+ #ifdef MONO_ARCH_AOT_SUPPORTED
+ 	case MONO_TRAMPOLINE_AOT:
+-		return (gconstpointer)mono_aot_trampoline;
++		return (gconstpointer)mono_aot_trampoline_keep_errno;
+ 	case MONO_TRAMPOLINE_AOT_PLT:
+-		return (gconstpointer)mono_aot_plt_trampoline;
++		return (gconstpointer)mono_aot_plt_trampoline_keep_errno;
+ #endif
+ 	case MONO_TRAMPOLINE_DELEGATE:
+-		return (gconstpointer)mono_delegate_trampoline;
++		return (gconstpointer)mono_delegate_trampoline_keep_errno;
+ 	case MONO_TRAMPOLINE_VCALL:
+-		return (gconstpointer)mono_vcall_trampoline;
++		return (gconstpointer)mono_vcall_trampoline_keep_errno;
+ 	default:
+ 		g_assert_not_reached ();
+ 		return NULL;

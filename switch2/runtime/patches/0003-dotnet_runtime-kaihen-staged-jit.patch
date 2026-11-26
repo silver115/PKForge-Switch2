@@ -1,0 +1,164 @@
+From b817fc129930e3a79a4e813507c5bee3f4f71a8d Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Thu, 19 Nov 2026 23:16:59 +0000
+Subject: [PATCH] libnx code manager: accept kaiHEN's staged JIT and publish it
+ on flush
+
+---
+ src/mono/mono/utils/mono-codeman-libnx.c | 56 +++++++++++++++++-------
+ 1 file changed, 40 insertions(+), 16 deletions(-)
+
+diff --git a/src/mono/mono/utils/mono-codeman-libnx.c b/src/mono/mono/utils/mono-codeman-libnx.c
+index d8cc7e7d9..5b11fdf95 100644
+--- a/src/mono/mono/utils/mono-codeman-libnx.c
++++ b/src/mono/mono/utils/mono-codeman-libnx.c
+@@ -11,12 +11,21 @@
+ #include "mono-codeman-libnx.h"
+ 
+ static mono_mutex_t g_jit_list_mutex;
++static mono_mutex_t g_jit_publish_mutex;
+ static JitAreaNode* g_jit_list = NULL;
+ 
++// [Switch 2, kaiHEN] With kaiHEN's JIT provider (link -lkaihen), jitCreate returns a
++// JitType_SetProcessMemoryPermission object whose rw_addr is a staging buffer, not the
++// backing source: RX stays mapped, and written code reaches it only when it is published.
++static bool nx_jit_is_staged(const Jit* jit)
++{
++	return jit->type == JitType_SetProcessMemoryPermission && jit->rw_addr != jit->src_addr;
++}
++
+ JitAreaNode* nx_jit_new(size_t size)
+ {
+ 	Jit native;
+-	
++
+ 	Result rc = jitCreate(&native, size);
+ 	if (R_FAILED(rc))
+ 	{
+@@ -27,12 +36,13 @@ JitAreaNode* nx_jit_new(size_t size)
+ 	// JitType_CodeMemory is special. While switch is R^X, when using a CodeMemory object we can have two different views of the memory, one is writeable and the other is executable, at the same time.
+ 	// In fact, regardless of what the jit API looks like, we can write and execute to this memory without calling the switch to writeable/executable functions.
+ 	// THe only downside is that we need to propagate the concept of the two views to the client.
+-	if (native.type != JitType_CodeMemory)
++	// The kaiHEN staged object also has two views; nx_jit_flush_cache publishes its writes.
++	if (native.type != JitType_CodeMemory && !nx_jit_is_staged(&native))
+ 	{
+ 		jitClose(&native);
+-		mono_trace_error(MONO_TRACE_DIAGNOSTICS, "jitCreate failed, only JitType_CodeMemory is supported. Type was %d", native.type);
++		mono_trace_error(MONO_TRACE_DIAGNOSTICS, "jitCreate failed, only JitType_CodeMemory or kaiHEN staged JIT is supported. Type was %d", native.type);
+ 		return NULL;
+-	}	
++	}
+ 
+ 	JitAreaNode* area = g_new0 (JitAreaNode, 1);
+ 	area->nativeJit = native;
+@@ -42,10 +52,10 @@ JitAreaNode* nx_jit_new(size_t size)
+ 	area->next = g_jit_list;
+ 	g_jit_list = area;
+ 	mono_os_mutex_unlock(&g_jit_list_mutex);
+-	
++
+ 	mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_DIAGNOSTICS, "Cretaed JIT area %p req=%lx size=%lx rw=%p rx=%p", area, size, native.size, native.rw_addr, native.rx_addr);
+ 
+-	return area;	
++	return area;
+ }
+ 
+ static void nxlogf(const char* format, ...)
+@@ -68,7 +78,7 @@ static void nx_jit_free_internal(JitAreaNode* node, bool useMonoTracing)
+ 		JitAreaNode* prev = g_jit_list;
+ 		while (prev && prev->next != node)
+ 			prev = prev->next;
+-		
++
+ 		if (prev)
+ 			prev->next = node->next;
+ 	}
+@@ -77,7 +87,7 @@ static void nx_jit_free_internal(JitAreaNode* node, bool useMonoTracing)
+ 		mono_trace(G_LOG_LEVEL_DEBUG, MONO_TRACE_DIAGNOSTICS, "Freeing JIT area %p size=%lx rw=%p rx=%p", node, node->nativeJit.size, node->nativeJit.rw_addr, node->nativeJit.rx_addr);
+ 	else
+ 		nxlogf("Freeing JIT area %p size=%lx rw=%p rx=%p", node, node->nativeJit.size, node->nativeJit.rw_addr, node->nativeJit.rx_addr);
+-	
++
+ 	jitClose(&node->nativeJit);
+ 	g_free(node);
+ }
+@@ -95,11 +105,11 @@ void nx_jit_free(JitAreaNode* node)
+ JitAreaNode* nx_jit_find_area(void* address, JIT_AREA_LOOKUP type, ptrdiff_t* offset)
+ {
+ 	JitAreaNode* node = NULL;
+-	mono_os_mutex_lock(&g_jit_list_mutex);	
++	mono_os_mutex_lock(&g_jit_list_mutex);
+ 
+ 	for (node = g_jit_list; node; node = node->next)
+ 	{
+-		if (type == JIT_AREA_LOOKUP_BY_RX || type == JIT_AREA_LOOKUP_ANY) 
++		if (type == JIT_AREA_LOOKUP_BY_RX || type == JIT_AREA_LOOKUP_ANY)
+ 		{
+ 			intptr_t start = (intptr_t)node->nativeJit.rx_addr;
+ 			intptr_t end = start + node->nativeJit.size;
+@@ -108,20 +118,20 @@ JitAreaNode* nx_jit_find_area(void* address, JIT_AREA_LOOKUP type, ptrdiff_t* of
+ 			if (addr >= start && addr < end)
+ 			{
+ 				if (offset) *offset = addr - start;
+-				break;			
++				break;
+ 			}
+ 		}
+ 
+-		if (type == JIT_AREA_LOOKUP_BY_RW || type == JIT_AREA_LOOKUP_ANY) 
++		if (type == JIT_AREA_LOOKUP_BY_RW || type == JIT_AREA_LOOKUP_ANY)
+ 		{
+ 			intptr_t start = (intptr_t)node->nativeJit.rw_addr;
+ 			intptr_t end = start + node->nativeJit.size;
+ 			intptr_t addr = (intptr_t)address;
+ 
+-			if (addr >= start && addr < end) 
++			if (addr >= start && addr < end)
+ 			{
+ 				if (offset) *offset = addr - start;
+-				break;			
++				break;
+ 			}
+ 		}
+ 	}
+@@ -132,6 +142,20 @@ JitAreaNode* nx_jit_find_area(void* address, JIT_AREA_LOOKUP type, ptrdiff_t* of
+ 
+ void nx_jit_flush_cache(JitAreaNode* node)
+ {
++	if (nx_jit_is_staged(&node->nativeJit))
++	{
++		// [Switch 2, kaiHEN] Publish the whole staging buffer to RX. Executable publishes only
++		// after Writable, which leaves RX mapped in this mode.
++		mono_os_mutex_lock(&g_jit_publish_mutex);
++		Result rc = jitTransitionToWritable(&node->nativeJit);
++		if (R_SUCCEEDED(rc))
++			rc = jitTransitionToExecutable(&node->nativeJit);
++		mono_os_mutex_unlock(&g_jit_publish_mutex);
++		if (R_FAILED(rc))
++			mono_trace_error(MONO_TRACE_DIAGNOSTICS, "JIT publish failed %x rx=%p size=%lx", rc, node->nativeJit.rx_addr, node->nativeJit.size);
++		return;
++	}
++
+ 	// First, flush the write cache for the writeable view
+ 	armDCacheFlush(node->nativeJit.rw_addr, node->nativeJit.size);
+ 	// Then, flush the instruction cache for the executable view
+@@ -152,7 +176,7 @@ void nx_jit_flush_cache_by_address(void* address)
+ 
+ // This function might be called from the embedder when closing the runtime.
+ // This can also happen after mono_jit_cleanup, so we need to be careful not to call any mono functions here.
+-void mono_nx_jit_force_dispose(void) 
++void mono_nx_jit_force_dispose(void)
+ {
+ 	nxlogf("mono_nx_jit_force_dispose enter");
+ 
+@@ -164,4 +188,4 @@ void mono_nx_jit_force_dispose(void)
+ 	}
+ 
+ 	nxlogf("mono_nx_jit_force_dispose finished");
+-}
+\ No newline at end of file
++}
+-- 
+2.39.5
+

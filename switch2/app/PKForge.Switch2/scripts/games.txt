@@ -1,0 +1,32 @@
+# The console's own saves (netload.py --script games): each Pokémon game on the owner's console opens its boxes, and B
+# goes back to Home. Read-only: nothing is written to a save. The games are those in the 2026-11-23 backup. A game's own
+# backup file is a copy the shelf hides, so each game has one save and a tap opens it.
+wait 3000
+page HomePage
+tap-text Legends: Z-A
+page BoxBrowserPage
+wait 2000
+shot games-za
+press B
+page HomePage
+wait 1500
+tap-text Violet
+page BoxBrowserPage
+wait 2000
+shot games-violet
+press B
+page HomePage
+wait 1500
+tap-text Legends: Arceus
+page BoxBrowserPage
+wait 2000
+shot games-arceus
+press B
+page HomePage
+wait 1500
+tap-text Let's Go Pikachu
+page BoxBrowserPage
+wait 2000
+shot games-pikachu
+press B
+page HomePage

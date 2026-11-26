@@ -1,0 +1,36 @@
+From 7f61610e0c0ce728650db8647da903f457ab6600 Mon Sep 17 00:00:00 2001
+From: exelix <13405476+exelix11@users.noreply.github.com>
+Date: Sat, 18 Jul 2026 19:06:01 +0200
+Subject: [PATCH 09/28] Rename nx_jit symbols
+
+(cherry picked from commit 9e20b060cb6ccfcc4f45b262305dabcf4eb0f21a)
+---
+ src/mono/mono/utils/mono-codeman-libnx.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/mono/mono/utils/mono-codeman-libnx.c b/src/mono/mono/utils/mono-codeman-libnx.c
+index fd7ea633f..d8cc7e7d9 100644
+--- a/src/mono/mono/utils/mono-codeman-libnx.c
++++ b/src/mono/mono/utils/mono-codeman-libnx.c
+@@ -152,16 +152,16 @@ void nx_jit_flush_cache_by_address(void* address)
+ 
+ // This function might be called from the embedder when closing the runtime.
+ // This can also happen after mono_jit_cleanup, so we need to be careful not to call any mono functions here.
+-void nx_jit_force_dispose(void) 
++void mono_nx_jit_force_dispose(void) 
+ {
+-	nxlogf("nx_jit_force_dispose enter");
++	nxlogf("mono_nx_jit_force_dispose enter");
+ 
+ 	while (g_jit_list)
+ 	{
+-		nxlogf("nx_jit_force_dispose loop");
++		nxlogf("mono_nx_jit_force_dispose loop");
+ 		JitAreaNode* node = g_jit_list;
+ 		nx_jit_free_internal(node, false);
+ 	}
+ 
+-	nxlogf("nx_jit_force_dispose finished");
++	nxlogf("mono_nx_jit_force_dispose finished");
+ }
+\ No newline at end of file

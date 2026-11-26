@@ -1,0 +1,4 @@
+# Boot with no saves: Home with its empty shelf.
+wait 3000
+page HomePage
+shot empty

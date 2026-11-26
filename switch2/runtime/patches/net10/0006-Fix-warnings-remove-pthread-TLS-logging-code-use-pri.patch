@@ -1,0 +1,110 @@
+From 015017c382e642f6545341d531715c6e832e5a1c Mon Sep 17 00:00:00 2001
+From: exelix <13405476+exelix11@users.noreply.github.com>
+Date: Sun, 1 Mar 2026 20:02:10 +0100
+Subject: [PATCH 06/28] Fix warnings, remove pthread TLS logging code, use
+ printf for syslog
+
+(cherry picked from commit 04eced5c83daf2135687f07f91c4b3bb36ec8ad7)
+---
+ src/mono/mono/eglib/glib.h                    |  2 +-
+ src/mono/mono/metadata/class-init.c           |  2 +-
+ src/mono/mono/utils/mono-tls.h                | 21 ++-----------------
+ .../libs/System.Native/pal_process_libnx.c    | 13 ++++++++----
+ 4 files changed, 13 insertions(+), 25 deletions(-)
+
+diff --git a/src/mono/mono/eglib/glib.h b/src/mono/mono/eglib/glib.h
+index 6d14a1721..6fd5ff84b 100644
+--- a/src/mono/mono/eglib/glib.h
++++ b/src/mono/mono/eglib/glib.h
+@@ -1008,7 +1008,7 @@ g_async_safe_fgets (char *str, int num, int handle, gboolean *newline)
+ 			*newline = TRUE;
+ 		}
+ 
+-		if (!isprint (str [i]))
++		if (!isprint ((unsigned char)str [i]))
+ 			str [i] = '\0';
+ 
+ 		if (str [i] == '\0')
+diff --git a/src/mono/mono/metadata/class-init.c b/src/mono/mono/metadata/class-init.c
+index 77edf8616..9d14fe3e9 100644
+--- a/src/mono/mono/metadata/class-init.c
++++ b/src/mono/mono/metadata/class-init.c
+@@ -2997,7 +2997,7 @@ mono_class_init_internal (MonoClass *klass)
+ 	if (klass->inited || mono_class_has_failure (klass))
+ 		return !mono_class_has_failure (klass);
+ 
+-	// g_print ("Init class %s\n", mono_type_get_full_name (klass));
++	//mono_trace_message (MONO_TRACE_DIAGNOSTICS, "Initializing class %s", mono_type_get_full_name (klass));
+ 
+ 	/*
+ 	 * This function can recursively call itself.
+diff --git a/src/mono/mono/utils/mono-tls.h b/src/mono/mono/utils/mono-tls.h
+index 88f1d947a..c21080dca 100644
+--- a/src/mono/mono/utils/mono-tls.h
++++ b/src/mono/mono/utils/mono-tls.h
+@@ -112,20 +112,12 @@ void* mono_native_tls_get_value (MonoNativeTlsKey key_index);
+ #include <pthread.h>
+ 
+ #define MonoNativeTlsKey pthread_key_t
++#define mono_native_tls_get_value pthread_getspecific
+ 
+ MONO_INLINE int
+ mono_native_tls_alloc (MonoNativeTlsKey *key, void *destructor)
+ {
+-	int result = pthread_key_create (key, (void (*)(void*)) destructor);
+-	if (result != 0) {
+-		printf("Failed to allocate TLS key with error %d\n", result);
+-		g_error("Failed to allocate TLS key");
+-	}
+-	else 
+-	{
+-		printf("Allocated TLS key %d\n", *key);
+-	}
+-	return result == 0;
++	return pthread_key_create (key, (void (*)(void*)) destructor) == 0;
+ }
+ 
+ MONO_INLINE void
+@@ -137,18 +129,9 @@ mono_native_tls_free (MonoNativeTlsKey key)
+ MONO_INLINE int
+ mono_native_tls_set_value (MonoNativeTlsKey key, gpointer value)
+ {	
+-	//printf ("Setting TLS key %d to %p\n", key, value);
+ 	return !pthread_setspecific (key, value);
+ }
+ 
+-MONO_INLINE const void*
+-mono_native_tls_get_value(MonoNativeTlsKey key_index)
+-{
+-	const void* key = pthread_getspecific(key_index);
+-	//printf ("Getting TLS key %d = %p\n", key_index, key);
+-	return key;
+-}
+-
+ #endif /* HOST_WIN32 */
+ 
+ void mono_tls_init_gc_keys (void);
+diff --git a/src/native/libs/System.Native/pal_process_libnx.c b/src/native/libs/System.Native/pal_process_libnx.c
+index 6f7b6a1eb..ee94dc1be 100644
+--- a/src/native/libs/System.Native/pal_process_libnx.c
++++ b/src/native/libs/System.Native/pal_process_libnx.c
+@@ -70,10 +70,15 @@ int32_t SystemNative_GetSid(int32_t pid)
+ 
+ void SystemNative_SysLog(SysLogPriority priority, const char* message, const char* arg1)
+ {
+-    if (message)
+-        svcOutputDebugString(message, strlen(message));
+-    if (arg1)
+-        svcOutputDebugString(arg1, strlen(arg1));
++    if (message && strcmp(message, "%s") != 0) {
++        printf("%s", message);
++        //svcOutputDebugString(message, strlen(message));
++    }
++    if (arg1) {
++        printf("%s", arg1);
++        //svcOutputDebugString(arg1, strlen(arg1));
++    }
++    printf("\n");
+ }
+ 
+ int32_t SystemNative_WaitIdAnyExitedNoHangNoWait(void)

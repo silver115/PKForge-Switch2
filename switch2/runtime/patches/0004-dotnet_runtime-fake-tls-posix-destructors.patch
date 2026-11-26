@@ -1,0 +1,77 @@
+From b1ad8058a512d1b7eeb6b5b054904fdf906ab5e6 Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Thu, 19 Nov 2026 23:23:18 +0000
+Subject: [PATCH] libnx fake TLS: POSIX destructor rules (skip NULL, keep the
+ block in place, repeat rounds)
+
+---
+ src/mono/mono/utils/mono-tls.c | 39 +++++++++++++++++++++-------------
+ 1 file changed, 24 insertions(+), 15 deletions(-)
+
+diff --git a/src/mono/mono/utils/mono-tls.c b/src/mono/mono/utils/mono-tls.c
+index b72018775..0047292bc 100644
+--- a/src/mono/mono/utils/mono-tls.c
++++ b/src/mono/mono/utils/mono-tls.c
+@@ -225,35 +225,44 @@ static void tls_thread_destructor(void* data)
+ {
+ 	if (!data)
+ 		return;
+-	
++
+ 	mono_trace_message (MONO_TRACE_DIAGNOSTICS, "Running fake TLS destructor for %p\n", data);
+ 
+ 	emulated_tls_data* tls = (emulated_tls_data*)data;
+-	for (int i = 0; i < TLS_EMU_MAX_KEYS; i++)
+-	{
+-		// If this key is not valid, or has been freed, skip it
+-		// The call to a destructor may free other keys so we need to check this every time
+-		if (!(g_my_key_bitmap & KEY(i)))
+-			continue;
+ 
+-		// If this thread does not use this key, skip it
+-		if (!(tls->bitmap & KEY(i)))
+-			continue;
++	// [Switch 2] libounce clears the slot before calling this destructor. Put it back so the
++	// key destructors see this thread's values (Mono's thread_info_key_dtor sets and reads its key).
++	threadTlsSet(g_fake_tls_key, tls);
+ 
+-		if (g_destructors[i])
++	// POSIX rules: a key's destructor runs only for a non-NULL value, which is cleared first.
++	// Destructors may set values again, so repeat up to PTHREAD_DESTRUCTOR_ITERATIONS (4) rounds.
++	for (int round = 0; round < 4; round++)
++	{
++		bool ran = false;
++		for (int i = 0; i < TLS_EMU_MAX_KEYS; i++)
+ 		{
++			// Skip keys that are free, or have no destructor
++			if (!(g_my_key_bitmap & KEY(i)) || !g_destructors[i])
++				continue;
++
+ 			void* value = tls->items[i];
++			if (!value)
++				continue;
++
+ 			tls->items[i] = NULL;
+ 			tls->bitmap &= ~KEY(i);
+ 			g_destructors[i](value);
++			ran = true;
+ 
+ 			mono_trace_message (MONO_TRACE_DIAGNOSTICS, "Ran g_destructors[%d] for value %p\n", i, value);
+-
+-			if (tls->bitmap & KEY(i))
+-				g_error("TLS destructor for key %d re-set the value, which is not supported", i);
+ 		}
++		if (!ran)
++			break;
+ 	}
+-}	
++
++	threadTlsSet(g_fake_tls_key, NULL);
++	free(tls);
++}
+ 
+ static emulated_tls_data* fake_tls_get(void)
+ {
+-- 
+2.39.5
+

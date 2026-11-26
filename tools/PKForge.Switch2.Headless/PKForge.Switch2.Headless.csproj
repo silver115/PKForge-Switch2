@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The headless host: PKForge on MauiLite in a Linux container, drawing to PNGs from scripted taps and buttons,
+       with console saves faked by a folder. It checks layouts without a Switch. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PKForge.Switch2.Headless</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/PKForge.Switch2.App/PKForge.Switch2.App.csproj" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.116.1" />
+    <None Include="scripts/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

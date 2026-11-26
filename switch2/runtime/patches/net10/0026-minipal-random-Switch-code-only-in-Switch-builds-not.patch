@@ -1,0 +1,32 @@
+From 0fa120023fa81a17e0759c7dfdf109a34fbeca3c Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Fri, 20 Nov 2026 00:09:28 +0000
+Subject: [PATCH 26/28] minipal random: Switch code only in Switch builds, not
+ in the AOT cross compiler
+
+---
+ src/native/minipal/random.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/native/minipal/random.c b/src/native/minipal/random.c
+index 588f204dd..c48936a52 100644
+--- a/src/native/minipal/random.c
++++ b/src/native/minipal/random.c
+@@ -23,7 +23,7 @@
+ 
+ #include "random.h"
+ 
+-#if TARGET_LIBNX
++#if defined(__SWITCH__)  // built for the Switch itself, not the AOT cross compiler that targets it
+ #include <switch.h>
+ #endif
+ 
+@@ -81,7 +81,7 @@ int32_t minipal_get_cryptographically_secure_random_bytes(uint8_t* buffer, int32
+ {
+     assert(buffer != NULL);
+ 
+-#ifdef TARGET_LIBNX
++#if defined(__SWITCH__)
+     if (R_FAILED(csrngGetRandomBytes(buffer, bufferLength)))
+     {
+         randomGet(buffer, bufferLength);

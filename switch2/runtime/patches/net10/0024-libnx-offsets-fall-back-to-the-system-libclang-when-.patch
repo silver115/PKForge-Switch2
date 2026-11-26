@@ -1,0 +1,28 @@
+From 74e6f689da59fdecaa53bc91b24766ba8c78030f Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Thu, 19 Nov 2026 23:59:57 +0000
+Subject: [PATCH 24/28] libnx offsets: fall back to the system libclang when
+ the libclang package is not restored
+
+---
+ src/mono/mono.proj | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/src/mono/mono.proj b/src/mono/mono.proj
+index a39fc6e15..82c349e8a 100644
+--- a/src/mono/mono.proj
++++ b/src/mono/mono.proj
+@@ -939,6 +939,13 @@ JS_ENGINES = [NODE_JS]
+       <_LibclangPythonBindingsPath>$(_LibclangPackageReferencePath)\tools\bindings\python</_LibclangPythonBindingsPath>
+       <_LibclangHeadersPath>$(_LibclangPackageReferencePath)\tools\include</_LibclangHeadersPath>
+     </PropertyGroup>
++    <!-- libnx offsets: MonoUseCrossTool is set only inside this target, so the libclang package above is never restored.
++         Use the system libclang as 9.0 did (it finds its own headers); the bindings sit beside offsets-tool.py. -->
++    <PropertyGroup Condition="'$(MonoUseCrossTool)' == 'true' and '$(_LibclangPackageReferencePath)' == ''">
++      <_LibclangPath>/usr/local/lib/libclang.so</_LibclangPath>
++      <_LibclangPythonBindingsPath></_LibclangPythonBindingsPath>
++      <_LibclangHeadersPath></_LibclangHeadersPath>
++    </PropertyGroup>
+ 
+     <ItemGroup Condition="'$(MonoUseCrossTool)' == 'true'">
+       <MonoAotCrossOffsetsToolParams Include="--abi=$(MonoAotAbi)" />

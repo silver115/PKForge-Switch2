@@ -1,0 +1,24 @@
+From a9106a1fddb4fe36f9bb60de03b311987aa1a91a Mon Sep 17 00:00:00 2001
+From: PKForge <pkforge@localhost>
+Date: Thu, 19 Nov 2026 23:46:57 +0000
+Subject: [PATCH 20/28] libnx: skip thread names (newlib has no
+ pthread_setname_np)
+
+---
+ src/native/minipal/thread.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/native/minipal/thread.h b/src/native/minipal/thread.h
+index a5d3676cd..a11661978 100644
+--- a/src/native/minipal/thread.h
++++ b/src/native/minipal/thread.h
+@@ -113,7 +113,8 @@ static inline size_t minipal_get_current_thread_id(void)
+  */
+ static inline int minipal_set_thread_name(pthread_t thread, const char* name)
+ {
+-#ifdef __wasm
++#if defined(__wasm) || defined(__SWITCH__)
++    // newlib on Switch has no pthread_setname_np.
+     // WASM does not support pthread_setname_np yet: https://github.com/emscripten-core/emscripten/pull/18751
+     return 0;
+ #else

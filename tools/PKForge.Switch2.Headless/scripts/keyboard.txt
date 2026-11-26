@@ -1,0 +1,49 @@
+# The keyboard path in the headless host (no software keyboard there): the Pokédex picker's search box takes focus by a
+# tap, `type` fills it, the list filters, and A picks the first match, which the editor's Species row then shows.
+# Home, Brilliant Diamond's boxes, then slot 1's summary: + opens the menu for the Pokemon under the cursor.
+wait 3000
+page HomePage
+tap-text Brilliant Diamond
+wait 4000
+page BoxBrowserPage
+press Plus
+wait 800
+expect-pad PadMenu
+shot editor-menu
+# "Summary", second in the right column. The menu paints its items, so it is tapped by place: the first tap
+# highlights it and the second chooses it, as PKForge's menus do.
+tap 511 171
+wait 300
+tap 511 171
+wait 2500
+shot summary
+page BoxBrowserPage
+# The live legality verdict: the seeded Pokemon have no moves.
+expect Illegal
+# Right steps through the summary's five pages.
+press Right
+wait 700
+shot summary-stats
+press Right
+wait 700
+shot summary-moves
+press Right
+wait 700
+shot summary-origin
+press Right
+wait 700
+shot summary-legality
+# X: edit this Pokemon in the box browser's editor. A on Species opens the Pokedex picker; B closes it.
+press X
+wait 1200
+shot editor
+press A
+wait 1200
+shot editor-species
+# The search box ("Search a Pokémon…"), by place: a text field is not a label, so tap-text cannot find it.
+tap 300 77
+type Bulbasaur
+wait 600
+press A
+wait 1000
+expect Bulbasaur

@@ -1,0 +1,28 @@
+# Restore points, made by --seed-restore-points: one per save, three for the first, its newest pinned.
+wait 4000
+page HomePage
+# Brilliant Diamond's boxes, then Save data (Y) and its Restore tile. The hub paints its tiles, so the tile is
+# tapped by place: the first tap highlights it and the second opens it.
+tap-text Brilliant Diamond
+wait 4000
+page BoxBrowserPage
+press Y
+wait 1500
+tap 117 320
+wait 300
+tap 117 320
+wait 2500
+page BackupHistoryPage
+expect restore point
+expect Phase 1 test point
+shot restore
+# A reaches the list, A again asks to restore the point, and A confirms: this build refuses the write.
+press A
+wait 800
+press A
+wait 1000
+press A
+wait 1500
+shot restore-refused
+expect is not verified yet
+page BackupHistoryPage
