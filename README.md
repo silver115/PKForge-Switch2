@@ -97,6 +97,15 @@ Open an [issue](https://github.com/silver115/PKForge-Switch2/issues) and attach 
 `sdmc:/switch/PKForge/logs/`. The logs include your console's account IDs, so look through them before you post them
 publicly.
 
+## Source code
+
+The port's source is on the [`source`](https://github.com/silver115/PKForge-Switch2/tree/source) branch, and each
+release names the tag it was built from (v0.1.0:
+[`switch2-v0.1.0`](https://github.com/silver115/PKForge-Switch2/tree/switch2-v0.1.0)). It is PKForge with the Switch 2
+work added in `switch2/`, `src/PKForge.MauiLite/` and `src/PKForge.Switch2.*`.
+[`switch2/README.md`](https://github.com/silver115/PKForge-Switch2/blob/source/switch2/README.md) explains how to build
+it.
+
 ## Credits
 
 - [PKForge](https://github.com/sofianeelhor/PKForge) by sofianeelhor: this port runs its screens and engine.
