@@ -92,8 +92,10 @@ then, saving in that game shows a message instead.
 
 ## Limitations
 
-- Home, Saves, the box browser, the Pokémon editor and restore points have been checked on Switch 2. PKForge's
-  other screens open but have not been checked yet.
+- Every screen and tool has been opened without errors on a PC test build. On a Switch 2, Home, Saves, the box
+  browser, the Pokémon editor, restore points, the Bank, Poképark, Events, Settings, the Save data tools and the
+  read-only Tools have been checked; the Tools and Pokémon actions that change boxes have not been tried on a console
+  yet.
 - No internet features yet: no update check, no downloads and no QR import.
 
 ## Reporting problems
