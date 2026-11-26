@@ -21,16 +21,14 @@ it can save to; the [games table](#games) shows what has been tested.
 
 ## Installation
 
-1. Download `PKForge-Switch2-<version>.zip` from the latest
-   [release](https://github.com/silver115/PKForge-Switch2/releases).
-2. Unzip it to the root of the SD card, with a card reader or over FTP. It puts the app here, with its licence texts in
-   `sdmc:/switch/PKForge/`:
+1. Download `PKForge.nro` from the latest [release](https://github.com/silver115/PKForge-Switch2/releases).
+2. Copy it to the `switch` folder on the SD card, with a card reader or over FTP:
 
 ```text
 sdmc:/switch/PKForge.nro
 ```
 
-PKForge keeps its settings, restore points, logs and save backups in `sdmc:/switch/PKForge/` too.
+On first launch, PKForge creates `sdmc:/switch/PKForge/` for its settings, restore points, logs and save backups.
 
 ## Quick start
 
@@ -111,4 +109,5 @@ publicly.
 
 ## License
 
-GPL-3.0, the same as PKForge and PKHeX. See [LICENSE](LICENSE).
+GPL-3.0, the same as PKForge and PKHeX. See [LICENSE](LICENSE). The app also contains other open-source software,
+listed with its licences in [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES.md).
