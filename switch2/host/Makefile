@@ -32,7 +32,7 @@ ROMFS		:=	build/romfs
 
 APP_TITLE	=	PKForge
 APP_AUTHOR	:=	PKForge
-APP_VERSION	:=	0.1.0
+APP_VERSION	:=	0.1.1
 
 ARCH	:=	$(SWITCH2_CPU) -mtp=soft -fPIE
 
@@ -111,7 +111,7 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(call pathof,$(dir))) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 			-I$(CURDIR)/$(BUILD)
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
-export NROFLAGS	+=	--nacp=$(CURDIR)/$(TARGET).nacp --romfsdir=$(CURDIR)/$(ROMFS)
+export NROFLAGS	+=	--nacp=$(CURDIR)/$(TARGET).nacp --romfsdir=$(CURDIR)/$(ROMFS) --icon=$(CURDIR)/icon.jpg
 
 .PHONY: $(BUILD) clean all
 

@@ -33,6 +33,10 @@ if [ "$root" = PKForge.Switch2.Spike ]; then
     done
     cp "$repo/src/PKForge.App/Resources/Fonts/NDS12.ttf" "$build/romfs/art/"
 fi
+# The licences of everything in the .nro travel with it (switch2/licenses/THIRD-PARTY-NOTICES.md).
+mkdir -p "$build/romfs/licenses"
+cp "$repo/LICENSE" "$build/romfs/LICENSE"
+cp "$repo"/switch2/licenses/* "$build/romfs/licenses/"
 # The app's package files (Android's assets) at their MAUI names; FileSystem.OpenAppPackageFileAsync reads /app/.
 if [ -d "$build/publish/app" ]; then
     cp -r "$build/publish/app" "$build/romfs/app"

@@ -4,6 +4,9 @@ wait 3000
 page HomePage
 expect Legends: Z-A
 shot home
+# The shot takes the console a while; the shelf can rebuild its cards meanwhile, and a tap across that misses
+# (release build, 2026-11-26), so Home settles first.
+wait 2000
 tap-text Legends: Z-A
 page BoxBrowserPage
 wait 2000
