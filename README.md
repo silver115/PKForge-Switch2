@@ -16,7 +16,7 @@ it can save to; the [games table](#games) shows what has been tested.
 
 - A Switch 2 running [kaiHEN](https://github.com/ouncebrew/kaihen), with the homebrew menu (hbmenu). Tested on
   firmware 23.0.1.
-- About 300 MB free on the SD card: the app is 283 MB, and its save backups need room too.
+- About 250 MB free on the SD card: the app is 223 MB, and its save backups need room too.
 - Touch works in handheld mode. Docked mode has not been tested.
 
 ## Installation
