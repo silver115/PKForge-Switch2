@@ -100,8 +100,8 @@ publicly.
 ## Source code
 
 The port's source is on the [`source`](https://github.com/silver115/PKForge-Switch2/tree/source) branch, and each
-release names the tag it was built from (v0.1.0:
-[`switch2-v0.1.0`](https://github.com/silver115/PKForge-Switch2/tree/switch2-v0.1.0)). It is PKForge with the Switch 2
+release names the tag it was built from (v0.1.1:
+[`switch2-v0.1.1`](https://github.com/silver115/PKForge-Switch2/tree/switch2-v0.1.1)). It is PKForge with the Switch 2
 work added in `switch2/`, `src/PKForge.MauiLite/` and `src/PKForge.Switch2.*`.
 [`switch2/README.md`](https://github.com/silver115/PKForge-Switch2/blob/source/switch2/README.md) explains how to build
 it.
