@@ -58,6 +58,12 @@ To undo a save, open the game's boxes, press **Y** (Save data) and choose **Rest
 PKForge only opens the saves of the Pokémon games below. kaiHEN gives homebrew full access to the console's storage,
 and kaiHEN's own README warns that a bad homebrew can brick a console.
 
+## Music
+
+PKForge plays your own music in the background. Copy MP3, FLAC, WAV or OGG files to `sdmc:/switch/PKForge/music/`
+(an album can keep its own subfolder), then open Settings, Look and feel, Music, and choose **Add music files**. Menus,
+Home, the boxes, the Bank and Poképark can each have their own music, and it fades from one to the next.
+
 ## Games
 
 | Game | Reading | Writing |
@@ -88,7 +94,7 @@ then, saving in that game shows a message instead.
 
 - Home, Saves, the box browser, the Pokémon editor and restore points have been checked on Switch 2. PKForge's
   other screens open but have not been checked yet.
-- No internet features yet: no update check, no downloads, no QR import, and no music.
+- No internet features yet: no update check, no downloads and no QR import.
 
 ## Reporting problems
 
@@ -99,8 +105,8 @@ publicly.
 ## Source code
 
 The port's source is on the [`source`](https://github.com/silver115/PKForge-Switch2/tree/source) branch, and each
-release names the tag it was built from (v0.2.0:
-[`switch2-v0.2.0`](https://github.com/silver115/PKForge-Switch2/tree/switch2-v0.2.0)). It is PKForge with the Switch 2
+release names the tag it was built from (v0.3.0:
+[`switch2-v0.3.0`](https://github.com/silver115/PKForge-Switch2/tree/switch2-v0.3.0)). It is PKForge with the Switch 2
 work added in `switch2/`, `src/PKForge.MauiLite/` and `src/PKForge.Switch2.*`.
 [`switch2/README.md`](https://github.com/silver115/PKForge-Switch2/blob/source/switch2/README.md) explains how to build
 it.
