@@ -4,7 +4,7 @@ namespace PKForge.Switch2.Platform.Tests;
 
 public sealed class ConsoleWriteTests : IDisposable
 {
-    const ulong ZA = 0x0100F43008C44000, Violet = 0x01008F6008C5E000;
+    const ulong ZA = 0x0100F43008C44000, Sword = 0x0100ABF008968000;
     static readonly ConsoleUser User = new(1, 1);
     static readonly DateTime When = new(2026, 11, 23, 6, 15, 0, DateTimeKind.Utc);
 
@@ -38,16 +38,33 @@ public sealed class ConsoleWriteTests : IDisposable
         Assert.Equal([4, 5, 6], host.ReadFile(ZA, User, "main"));
     }
 
+    // The other games whose writes are switched on, each with the file it keeps its save in.
+    [Theory]
+    [InlineData(0x01008F6008C5E000UL, "main")]          // Violet
+    [InlineData(0x01001F5010DFA000UL, "main")]          // Legends: Arceus
+    [InlineData(0x010003F003A34000UL, "savedata.bin")]  // Let's Go Pikachu
+    public async Task Write_OtherVerifiedGame_IsWritten(ulong title, string file)
+    {
+        var host = new FakeHost().Add(title, User, file, [1, 2, 3]);
+        var access = Access(host);
+        var doc = ConsoleDocumentId.Format(title, User, file);
+
+        await access.ReadAsync(doc);
+        await access.WriteAtomicallyAsync(doc, new byte[] { 4, 5, 6 });
+
+        Assert.Equal([4, 5, 6], host.ReadFile(title, User, file));
+    }
+
     [Fact]
     public async Task Write_OtherGame_IsRefused()
     {
-        var host = new FakeHost().Add(Violet, User, "main", [1, 2, 3]);
+        var host = new FakeHost().Add(Sword, User, "main", [1, 2, 3]);
         var access = Access(host);
-        await access.ReadAsync(Doc(Violet));
+        await access.ReadAsync(Doc(Sword));
 
-        var error = await Refused<InvalidOperationException>(() => access.WriteAtomicallyAsync(Doc(Violet), new byte[] { 4, 5, 6 }).AsTask());
+        var error = await Refused<InvalidOperationException>(() => access.WriteAtomicallyAsync(Doc(Sword), new byte[] { 4, 5, 6 }).AsTask());
 
-        Assert.Equal("Writing Violet saves on Switch 2 is not verified yet, so PKForge only reads them.", error.Message);
+        Assert.Equal("Writing Sword saves on Switch 2 is not verified yet, so PKForge only reads them.", error.Message);
         Assert.Empty(host.Writes);
     }
 

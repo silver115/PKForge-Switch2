@@ -17,7 +17,13 @@ public sealed record CatalogResult(IReadOnlyList<ConsoleSaveEntry> Saves, IReadO
 /// </summary>
 public static class ConsoleWritableTitles
 {
-    public static IReadOnlyCollection<ulong> Ids { get; } = [0x0100F43008C44000];  // Legends: Z-A
+    public static IReadOnlyCollection<ulong> Ids { get; } =
+    [
+        0x0100F43008C44000,  // Legends: Z-A
+        0x01008F6008C5E000,  // Violet
+        0x01001F5010DFA000,  // Legends: Arceus
+        0x010003F003A34000,  // Let's Go Pikachu
+    ];
 }
 
 /// <summary>Finds a user's Pokémon saves in the console's save storage. Saves of other titles are never read.</summary>
