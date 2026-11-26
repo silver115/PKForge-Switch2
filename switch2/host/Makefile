@@ -32,7 +32,7 @@ ROMFS		:=	build/romfs
 
 APP_TITLE	=	PKForge
 APP_AUTHOR	:=	PKForge
-APP_VERSION	:=	0.2.0
+APP_VERSION	:=	0.3.0
 
 ARCH	:=	$(SWITCH2_CPU) -mtp=soft -fPIE
 

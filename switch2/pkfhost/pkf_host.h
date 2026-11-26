@@ -21,6 +21,18 @@ s64  pkf_save_write_read(const char* path, void* buf, s64 len);  // bytes read f
 s64  pkf_save_write_file(const char* path, const void* buf, s64 len);  // in place, same size; bytes written
 s64  pkf_save_commit(void);                                       // 0; nothing is kept that was not committed
 void pkf_save_close_write(void);
+// Background music (pkf_music.c): one track at a time, opened paused; MP3, FLAC, WAV, Ogg Vorbis.
+#define PKF_MUSIC_NONE    0
+#define PKF_MUSIC_PLAYING 1
+#define PKF_MUSIC_PAUSED  2
+#define PKF_MUSIC_ENDED   3   // the track played to its end
+s64  pkf_music_open(const char* path, s64 start_ms);   // stops the current track; 0, or PKF_IO_FAILED / -(s64)Result
+void pkf_music_play(s32 playing);
+void pkf_music_stop(void);
+void pkf_music_gain(s32 per_mille);                    // 0..1000, heard at once
+s64  pkf_music_position_ms(void);
+s32  pkf_music_state(void);                            // PKF_MUSIC_*
+void pkf_music_shutdown(void);                         // before the app exits: the audio thread ends
 s64  pkf_keyboard_show(const char* text, const char* guide, s32 max_len, s32 numeric, s32 multiline, char* out, s32 out_len);  // 0 entered, 1 cancelled
 s64  pkf_versions(char* firmware, s32 len, u32* kaihen_protocol);         // "unknown" and 0 when a service fails
 void pkf_register_mono_heap(u64 size, u64 (*used)(void));

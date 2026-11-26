@@ -41,7 +41,7 @@ try
 {
     runner = AppHost.Start((IHostBackend?)scripted ?? backend, new NativeConsoleSaveHost(),
         new LitePaths("sdmc:/switch/PKForge/data", "sdmc:/switch/PKForge/cache", "sdmc:/switch/PKForge/data/preferences.json"),
-        name => File.OpenRead("/app/" + name));
+        name => File.OpenRead("/app/" + name), new NativeMusicOutput());
     runner.Profiling = true;  // phase 1 builds find slow screens: frame.<Page>.draws and .dirt below
     // Composition draws in bands on every core the process has; the host gave the UI thread the lowest one.
     var mask = NativeSystem.CoreMask();
@@ -80,6 +80,7 @@ catch (Exception error)
 }
 finally
 {
+    NativeMusicOutput.Shutdown();  // the audio thread ends before Mono does
     backend.Dispose();
     if (runner is not null)
         foreach (var (page, open) in runner.Frames.Opens)

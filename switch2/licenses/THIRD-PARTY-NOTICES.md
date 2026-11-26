@@ -27,6 +27,8 @@ and in the app's romfs). `PKForge.nro` also contains the software below, and car
 | libnx | ISC | `libnx-ISC.txt` |
 | mimalloc | MIT | `mimalloc-MIT.txt` |
 | libkaihen | ISC | `kaihen-ISC.txt` |
+| dr_libs: dr_mp3, dr_flac, dr_wav (David Reid) | Public domain or MIT-0 | `dr_libs-LICENSE.txt` |
+| stb_vorbis (Sean Barrett) | Public domain or MIT | `stb_vorbis-LICENSE.txt` |
 | M PLUS Rounded 1c font (The Rounded M+ Project Authors) | SIL Open Font License 1.1 | `MPLUSRounded1c-OFL.txt` |
 | NDS12 font (Caveras) | CC BY-NC-SA 3.0 | `NDS12-license.txt` |
 

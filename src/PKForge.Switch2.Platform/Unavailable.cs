@@ -3,7 +3,8 @@ using PKForge.Domain;
 namespace PKForge.Switch2.Platform;
 
 // PKForge's platform services that have nothing behind them on the Switch 2 in phase 1 (design 7.6, 7.7): no system
-// file or folder picker, no second screen, and music waits for a later update. Each answers "nothing there".
+// file or folder picker, no second screen, and no music in the headless host (the console has ConsoleMusicPlayer).
+// Each answers "nothing there".
 
 public sealed class UnavailableDocumentPicker : IDocumentPicker
 {

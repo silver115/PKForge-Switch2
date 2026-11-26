@@ -53,6 +53,13 @@ static void* pkfhost_symbol(void* handle, const char* name, char** err, void* us
     SYM_RESOLVE_EXISTING(pkf_save_commit);
     SYM_RESOLVE_EXISTING(pkf_save_close_write);
     SYM_RESOLVE_EXISTING(pkf_keyboard_show);
+    SYM_RESOLVE_EXISTING(pkf_music_open);
+    SYM_RESOLVE_EXISTING(pkf_music_play);
+    SYM_RESOLVE_EXISTING(pkf_music_stop);
+    SYM_RESOLVE_EXISTING(pkf_music_gain);
+    SYM_RESOLVE_EXISTING(pkf_music_position_ms);
+    SYM_RESOLVE_EXISTING(pkf_music_state);
+    SYM_RESOLVE_EXISTING(pkf_music_shutdown);
     SYM_RESOLVE_EXISTING(pkf_versions);
     SYM_RESOLVE_EXISTING(pkf_memory);
     SYM_RESOLVE_EXISTING(pkf_ms_since_main);

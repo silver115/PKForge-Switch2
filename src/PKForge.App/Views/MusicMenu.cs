@@ -36,6 +36,9 @@ public static class MusicMenu
 #if ANDROID
             if (music is Platforms.Android.MusicPlayer { LastError: { } error })
                 message += $"\nLast error: {error}";
+#elif SWITCH2
+            if (music is PKForge.Switch2.Platform.ConsoleMusicPlayer { LastError: { } error })
+                message += $"\nLast error: {error}";
 #endif
             PadOption[] options =
             [
@@ -50,7 +53,13 @@ public static class MusicMenu
                         MusicPlace.Bank => "bank",
                         _ => "music",
                     }, Detail: p.Detail)),
+#if SWITCH2
+                // The console has no file picker: the library is a folder on the SD card, read again from here.
+                new($"Add music files ({music.Library.Count})", IconPath: "folder",
+                    Detail: $"Reads {MusicFolder(music)}: copy MP3, FLAC, WAV or OGG files there first."),
+#else
                 new($"Add music files ({music.Library.Count})", IconPath: "folder", Detail: "Pick audio files on your device to add to the library."),
+#endif
                 new(music.Library.Count > 0 ? "Clear library" : "-", IconPath: "delete",
                     Detail: music.Library.Count > 0 ? "Empties the list. Your audio files stay on the device." : null),
                 new($"Order: {order}", IconPath: "shuffle", Detail: "Play the tracks in order or shuffled."),
@@ -73,6 +82,12 @@ public static class MusicMenu
                 case "Skip to next track": music.Skip(); break;
                 case var add when add?.StartsWith("Add music files", StringComparison.Ordinal) == true:
                 {
+#if SWITCH2
+                    var found = music.Add([]);
+                    status(found > 0 ? $"Added {found} track(s) from {MusicFolder(music)}."
+                        : $"No new tracks in {MusicFolder(music)}: copy MP3, FLAC, WAV or OGG files there.");
+                    break;
+#else
                     var picker = IPlatformApplication.Current?.Services.GetService<IDocumentPicker>();
                     if (picker is null) break;
                     var documents = await picker.PickManyAsync();
@@ -80,6 +95,7 @@ public static class MusicMenu
                     var added = music.Add(documents);
                     status(added > 0 ? $"Added {added} track(s) to the music library." : "Those files are already in the library.");
                     break;
+#endif
                 }
                 case "Clear library":
                     var confirmed = await PadMenu.ConfirmAsync(host, "Clear music library?",
@@ -111,6 +127,11 @@ public static class MusicMenu
     }
 
     private static string PlaceName(MusicPlace place) => Places.First(p => p.Place == place).Name.ToLowerInvariant();
+
+#if SWITCH2
+    private static string MusicFolder(IMusicPlayer music) =>
+        (music as PKForge.Switch2.Platform.ConsoleMusicPlayer)?.Folder ?? "the music folder";
+#endif
 
     /// <summary>
     /// The volume in steps of 10: picking one is heard at once and keeps the menu open on it, so

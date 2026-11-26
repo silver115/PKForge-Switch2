@@ -154,8 +154,9 @@ public static class ConsoleServices
 {
     /// <param name="backupRoot">Where the original of each written save is kept (sdmc:/switch/PKForge/save-backups).</param>
     /// <param name="guard">The write guard, from the app's services; null for none.</param>
+    /// <param name="music">The background music player; null for silence (the headless host).</param>
     public static void Register(IServiceCollection services, IConsoleSaveHost host, string backupRoot,
-        Func<IServiceProvider, IConsoleWriteGuard?> guard)
+        Func<IServiceProvider, IConsoleWriteGuard?> guard, Func<IMusicPlayer>? music = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(guard);
@@ -168,6 +169,6 @@ public static class ConsoleServices
         services.AddSingleton<IFolderPicker, UnavailableFolderPicker>();
         services.AddSingleton<IFolderFileAccess, UnavailableFolderFileAccess>();
         services.AddSingleton<ISecondaryDisplayHost, NoSecondaryDisplay>();
-        services.AddSingleton<IMusicPlayer, SilentMusicPlayer>();
+        services.AddSingleton<IMusicPlayer>(_ => music?.Invoke() ?? new SilentMusicPlayer());
     }
 }

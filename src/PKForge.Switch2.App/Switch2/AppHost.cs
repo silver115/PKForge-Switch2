@@ -14,16 +14,23 @@ public static class AppHost
     public const string Version = "3.2.0";
     public const string Build = "320";
 
-    public static LiteRunner Start(IHostBackend backend, IConsoleSaveHost saves, LitePaths paths, Func<string, Stream> openPackageFile)
+    /// <param name="music">The console's music output; null (the headless host) keeps the app silent.</param>
+    public static LiteRunner Start(IHostBackend backend, IConsoleSaveHost saves, LitePaths paths, Func<string, Stream> openPackageFile,
+        IMusicOutput? music = null)
     {
         ArgumentNullException.ThrowIfNull(backend);
         // An exception in app code that MauiLite called is logged, as AppLog logs Android's unhandled ones.
         UiErrors.Reported += (error, where) => AppLog.Error("ui", $"Unhandled in {where}", error);
+        var root = Path.GetDirectoryName(paths.AppData.TrimEnd('/', '\\'))!;
         // Next to the data folder: sdmc:/switch/PKForge/save-backups on the console. Nothing deletes what goes there.
-        var saveBackups = Path.Combine(Path.GetDirectoryName(paths.AppData.TrimEnd('/', '\\'))!, "save-backups");
+        var saveBackups = Path.Combine(root, "save-backups");
+        // The music library is the files the player copies to sdmc:/switch/PKForge/music.
+        Func<IMusicPlayer>? musicPlayer = music is null
+            ? null
+            : () => new ConsoleMusicPlayer(music, Path.Combine(root, "music"), Preferences.Default, UiLoop.Current);
         LitePlatform.Configure(paths, openPackageFile, services => ConsoleServices.Register(services, saves, saveBackups,
             provider => new ConsoleLegalityGuard(provider.GetRequiredService<ISaveEngine>(), provider.GetRequiredService<ILegalityService>(),
-                provider.GetRequiredService<IBackupService>(), () => HaXMode.IsOn)));
+                provider.GetRequiredService<IBackupService>(), () => HaXMode.IsOn), musicPlayer));
         LitePlatform.SetAppInfo("PKForge", "org.pkforge.app", Version, Build);
         ClearStaleEvents(paths.Cache, openPackageFile);
         // The console's own storage is the one save source, so the emulator-linking wizard never shows.
@@ -38,6 +45,8 @@ public static class AppHost
             File.Delete(seedFlag);
             _ = SeedRestorePointsAsync(services);
         }
+        // The player's default music starts with the app, as App.OnStart does on Android.
+        (services.GetService<IMusicPlayer>() as ConsoleMusicPlayer)?.MaybeAutostart();
         return runner;
     }
 
