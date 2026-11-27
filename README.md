@@ -76,6 +76,9 @@ Home, the boxes, the Bank and Poképark can each have their own music, and it fa
 Writing is switched on for a game only after a console test shows that the game loads a save PKForge wrote. Until
 then, saving in that game shows a message instead.
 
+The Mystery Gift gallery uses Project Pokémon's [EventsGallery](https://github.com/projectpokemon/EventsGallery) as of
+13 November 2026, with Legends: Z-A's Shiny Xerneas; newer gifts come with later releases.
+
 ## Controls
 
 | Where | Button | Action |
@@ -92,10 +95,7 @@ then, saving in that game shows a message instead.
 
 ## Limitations
 
-- Every screen and tool has been opened without errors on a PC test build. On a Switch 2, Home, Saves, the box
-  browser, the Pokémon editor, restore points, the Bank, Poképark, Events, Settings, the Save data tools and the
-  read-only Tools have been checked; the Tools and Pokémon actions that change boxes have not been tried on a console
-  yet.
+- Every screen and tool has been opened without errors, on a PC test build and on a Switch 2.
 - No internet features yet: no update check, no downloads and no QR import.
 
 ## Reporting problems
@@ -107,8 +107,8 @@ publicly.
 ## Source code
 
 The port's source is on the [`source`](https://github.com/silver115/PKForge-Switch2/tree/source) branch, and each
-release names the tag it was built from (v0.3.0:
-[`switch2-v0.3.0`](https://github.com/silver115/PKForge-Switch2/tree/switch2-v0.3.0)). It is PKForge with the Switch 2
+release names the tag it was built from (v0.4.0:
+[`switch2-v0.4.0`](https://github.com/silver115/PKForge-Switch2/tree/switch2-v0.4.0)). It is PKForge with the Switch 2
 work added in `switch2/`, `src/PKForge.MauiLite/` and `src/PKForge.Switch2.*`.
 [`switch2/README.md`](https://github.com/silver115/PKForge-Switch2/blob/source/switch2/README.md) explains how to build
 it.
