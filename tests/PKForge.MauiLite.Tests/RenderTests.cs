@@ -166,6 +166,79 @@ public class RenderTests
 
     static void PaintWhite(object? sender, SKPaintSurfaceEventArgs e) => e.Surface.Canvas.Clear(SKColors.White);
 
+    // A GL view records its painter, and the frame replays the recording strip by strip on the drawing threads. As the
+    // Poképark draws (a small bitmap scaled up to the whole view, without smoothing), the strips together are the
+    // painter's drawing exactly, and its Clear stays inside the view.
+    [Fact]
+    public void GLView_ReplayedInStrips_IsItsPaintersDrawing()
+    {
+        using var art = new SKBitmap(32, 18);
+        for (var x = 0; x < 32; x++)
+            for (var y = 0; y < 18; y++)
+                art.SetPixel(x, y, new SKColor((byte)(x * 8), (byte)(y * 14), 200));
+        void Paint(SKCanvas canvas, int width, int height)
+        {
+            canvas.Clear(SKColors.Green);
+            canvas.DrawBitmap(art, SKRect.Create(0, 0, 32, 18), SKRect.Create(0, 0, width, height));
+        }
+        var view = TopLeft(new SKGLView(), 480, 270, left: 100);
+        view.PaintSurface += (_, e) => Paint(e.Surface.Canvas, e.BackendRenderTarget.Width, e.BackendRenderTarget.Height);
+        using var bands = new DrawBands([0, 1, 2, 3], _ => { });
+        var renderer = new Renderer(Scale) { Bands = bands };
+        using var frame = SKSurface.Create(new SKImageInfo(1920, 1080, SKColorType.Rgba8888, SKAlphaType.Premul));
+        var root = BlackScreen(view);
+        LayoutPass.Run(root, new Size(1280, 720));
+
+        renderer.Render(root, frame, full: true);
+
+        using var expected = new SKBitmap(720, 405, SKColorType.Rgba8888, SKAlphaType.Premul);
+        using (var canvas = new SKCanvas(expected))
+            Paint(canvas, 720, 405);
+        using var drawn = new SKBitmap(1920, 1080, SKColorType.Rgba8888, SKAlphaType.Premul);
+        frame.ReadPixels(drawn.Info, drawn.GetPixels(), drawn.RowBytes, 0, 0);
+        for (var y = 0; y < 405; y += 7)
+            for (var x = 0; x < 720; x += 5)
+                Assert.Equal(expected.GetPixel(x, y), drawn.GetPixel(150 + x, y));
+        Assert.Equal(SKColors.Black, drawn.GetPixel(149, 100));
+        Assert.Equal(SKColors.Black, drawn.GetPixel(150 + 720, 100));
+    }
+
+    // PKForge's PaintGuard clears a GL view's surface after a failed paint: the surface converts to a real one.
+    [Fact]
+    public void GLView_Surface_ConvertsToASurface()
+    {
+        var view = TopLeft(new SKGLView(), 100, 80);
+        var cleared = false;
+        view.PaintSurface += (_, e) =>
+        {
+            SKSurface surface = e.Surface;
+            surface.Canvas.Clear();
+            cleared = true;
+        };
+        using var frame = new Frame();
+
+        frame.Render(BlackScreen(view), full: true);
+
+        Assert.True(cleared);
+    }
+
+    // The Poképark reads its size from the GL view's render target (ParkCanvas): MauiLite's GL view is drawn on the CPU,
+    // and its render target is the surface's size in pixels.
+    [Fact]
+    public void GLView_RenderTarget_IsTheSurfacesSize()
+    {
+        var view = TopLeft(new SKGLView(), 100, 80);
+        (int Width, int Height)? target = null;
+        SKImageInfo info = default;
+        view.PaintSurface += (_, e) => { target = (e.BackendRenderTarget.Width, e.BackendRenderTarget.Height); info = e.Info; };
+        using var frame = new Frame();
+
+        frame.Render(BlackScreen(view), full: true);
+
+        Assert.Equal((info.Width, info.Height), target);
+        Assert.True(info.Width > 0);
+    }
+
     static EventHandler<SKPaintSurfaceEventArgs> Guard(string area, EventHandler<SKPaintSurfaceEventArgs> paint) =>
         (sender, args) =>
         {

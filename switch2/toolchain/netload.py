@@ -5,8 +5,8 @@ Sends a .nro to the console's homebrew loader (hbmenu's netloader, in nxlink's p
 
 --script runs a test script from switch2/app/PKForge.Switch2/scripts/ in place of a person, then quits. --report has the
 app send this PC its report when it quits (switch2/host/source/run_report.c): this prints it and exits 1 if the script
-failed; that run then closes the whole loader app, so the loader is started again from HOME. Without --report a run
-goes back to the loader's menu, where the netloader is opened again; its results stay in sdmc:/switch/PKForge/logs/.
+failed. Every run closes the whole loader app when it quits, so the loader is started again from HOME for the next one
+(a run started in the old process crashed); a run's results stay in sdmc:/switch/PKForge/logs/ too.
 --address defaults to the PKF_CONSOLE_ADDRESS environment variable.
 """
 import argparse

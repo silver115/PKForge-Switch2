@@ -1,0 +1,16 @@
+# Menus by name: Settings (+), then Look and feel, then Music, whose items are checked by name and left with B.
+wait 3000
+page HomePage
+press Plus
+choose Look and feel
+choose Music
+expect-option Play
+expect-option Add music files
+press B
+wait 600
+expect-option Music
+press B
+wait 600
+press B
+wait 600
+expect-pad HomePage

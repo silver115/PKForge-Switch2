@@ -68,6 +68,7 @@ public sealed class HeadlessTests : IDisposable
     [InlineData("box.txt")]
     [InlineData("keyboard.txt")]
     [InlineData("games.txt")]
+    [InlineData("menus.txt")]
     public void Headless_ScreenScript_Passes(string script)
     {
         var path = Path.Combine(AssetListTests.RepoRoot(), "tools", "PKForge.Switch2.Headless", "scripts", script);

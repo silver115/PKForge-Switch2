@@ -1,0 +1,23 @@
+# The Tools and Pokémon actions that change a save, on the console (netload.py --script actions --report), in Let's Go
+# Pikachu's boxes: every Tools item, then every action of the menu of the Pokémon in box 1, slot 1, each opened,
+# checked for UI errors and left with B. Some act at once (legalizing, sending to the Bank, releasing): each such
+# write makes a restore point, and the first copies the original save to save-backups/, so restoring the point made
+# before the run puts the save back.
+wait 3000
+page HomePage
+wait 2000
+tap-text Let's Go Pikachu
+page BoxBrowserPage
+wait 2000
+press X
+wait 1500
+sweep reopen X except Multi-select; Box manager
+press B
+wait 1000
+press Plus
+wait 1000
+sweep reopen Plus
+press B
+wait 1000
+press B
+page HomePage

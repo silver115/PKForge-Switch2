@@ -1,0 +1,48 @@
+# PKForge's other screens on the console's real saves (netload.py --script screens --report): Home's cards, every
+# Settings section, and in Legends: Z-A's boxes every Save data tool and the Tools that only read, each opened, checked
+# for UI errors and left with B. Nothing is edited, and the tools that change a save without asking are left out: the
+# Pokémon (+) menu, and Tools that sort, generate, batch-edit or rename. (The headless sweep.txt covers them all.)
+wait 3000
+page HomePage
+# Home's cards, by place (they paint their names): Bank, Dex Autopilot, Poképark, Events.
+tap 78 386
+wait 2500
+press B
+wait 1200
+page HomePage
+tap 357 386
+wait 2500
+press B
+wait 1200
+page HomePage
+tap 496 386
+wait 2500
+press B
+wait 1200
+page HomePage
+tap 635 386
+wait 1500
+press B
+wait 1200
+page HomePage
+press Plus
+sweep except Quit PKForge
+press B
+wait 1000
+page HomePage
+wait 2000
+tap-text Legends: Z-A
+page BoxBrowserPage
+wait 2000
+press Y
+wait 1500
+sweep reopen Y except Close save; Export a copy; Raw bytes; Save blocks; Fashion
+press B
+wait 1000
+press X
+wait 1500
+sweep reopen X except Multi-select; Box manager; Sort boxes; Import .pk files; Import Showdown team; Random team; Egg factory; Generate Living Dex; Day Care; Batch editor; Battle prep; Presets; Rename and original trainer; Trainer profiles; Collection dex
+press B
+wait 1000
+press B
+page HomePage

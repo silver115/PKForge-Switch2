@@ -1,0 +1,53 @@
+# Every screen PKForge reaches from Home and from a game's boxes, on the seeded saves: each Home card, each Settings
+# section, and each item of a box's Save data (Y), Tools (X) and Pokémon (+) menus, opened, checked for UI errors and
+# left with B. Long, and it changes the seeded save: run by hand with the headless host (--profile not needed).
+wait 3000
+page HomePage
+# Home's cards, by place (they paint their names): Bank, Dex Autopilot, Poképark, Events.
+tap 78 386
+wait 2500
+shot sweep-bank
+press B
+wait 1200
+page HomePage
+tap 357 386
+wait 2500
+shot sweep-autopilot
+press B
+wait 1200
+page HomePage
+tap 496 386
+wait 2500
+shot sweep-park
+press B
+wait 1200
+page HomePage
+tap 635 386
+wait 1500
+shot sweep-events
+press B
+wait 1200
+page HomePage
+press Plus
+sweep except Quit PKForge
+press B
+wait 1000
+page HomePage
+tap-text Brilliant Diamond
+wait 4000
+page BoxBrowserPage
+press Y
+wait 1500
+sweep reopen Y except Close save
+press B
+wait 1000
+press X
+wait 1500
+# Multi-select and Box manager are modes of the boxes, not screens.
+sweep reopen X except Multi-select; Box manager
+press B
+wait 1000
+press Plus
+wait 1000
+# Duplicate and Send to Bank log "Edit aborted": the seeded Brilliant Diamond save is read-only, which is right.
+sweep reopen Plus

@@ -154,11 +154,9 @@ int main(int argc, char* argv[])
         if (strcmp(argv[i], "--report") == 0)
             g_send_report = true;
     }
-    // Netloaded: quitting goes back to the loader for the next run, not out of the homebrew loader with the whole
-    // application (aot_config.ini's exit_process_on_end, kept for normal launches). Not after a report: a run that
-    // used the console's sockets after Mono showed "an error occurred" on the way back (2026-11-23), so it exits whole.
-    if (__nxlink_host.s_addr && !g_send_report)
-        g_config.exit_process_on_end = false;
+    // Every run, netloaded too, ends the whole application when it quits (aot_config.ini's exit_process_on_end). A run
+    // that went back to the loader left Mono's threads behind, and the next .nro started in that process crashed as it
+    // started (2026-11-26 and 11-27, each time at the old run's heap address), so each run starts from HOME instead.
     // Which loader started this run (logged for test runs).
     if (envGetLoaderInfoSize())
         io_debugf("Loader: %.*s", (int)envGetLoaderInfoSize(), envGetLoaderInfo());

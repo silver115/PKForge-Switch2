@@ -85,7 +85,10 @@ namespace SkiaSharp.Views.Maui.Controls
         public bool EnableTouchEvents { get => (bool)GetValue(EnableTouchEventsProperty)!; set => SetValue(EnableTouchEventsProperty, value); }
 
         /// <summary>The surface size in pixels (in units when <see cref="IgnorePixelScaling"/> is set).</summary>
-        public SKSize CanvasSize { get; private set; }
+        public SKSize CanvasSize { get; private protected set; }
+
+        /// <summary>Set by <see cref="InvalidateSurface"/>: the next frame paints again.</summary>
+        private protected bool NeedsPaint { get => _needsPaint; set => _needsPaint = value; }
 
         EventHandler<SKPaintSurfaceEventArgs>? _paintSurface;
         string? _painter;
@@ -101,7 +104,7 @@ namespace SkiaSharp.Views.Maui.Controls
         // A frame's profile names the paint by its handler: "paint BoxBrowserPage.Paint".
         internal override string PrepareName => _painter ??= "paint " + (_paintSurface?.GetInvocationList() is [var first, ..] ? Painter(first) : "SKCanvasView");
 
-        static string Painter(Delegate handler)
+        private protected static string Painter(Delegate handler)
         {
             // A wrapper (PKForge's PaintGuard.Wrap) is a lambda whose closure holds the handler it calls.
             for (var depth = 0; depth < 4 && handler.Target is { } closure && closure.GetType().Name.StartsWith('<'); depth++)
@@ -207,19 +210,40 @@ namespace SkiaSharp.Views.Maui.Controls
 
 namespace SkiaSharp.Views.Maui
 {
+    /// <summary>
+    /// The render target a GL view's paint event carries. MauiLite draws GL views on the CPU, so it is the surface's size
+    /// in pixels, all PKForge reads from it (ParkCanvas): SkiaSharp's GRBackendRenderTarget needs Skia's GPU code, which
+    /// the console's Skia leaves out.
+    /// </summary>
+    public sealed record SKGLRenderTarget(int Width, int Height);
+
+    /// <summary>
+    /// A GL view's surface in MauiLite: <see cref="Canvas"/> records what the painter draws, and the frame replays it
+    /// strip by strip on the drawing threads (see SKGLView). Code that needs a real SKSurface (PKForge's PaintGuard
+    /// clears it after a failed paint) gets a 1x1 one through the conversion.
+    /// </summary>
+    public sealed class SKGLSurface(SKCanvas canvas, SKSurface fallback)
+    {
+        public SKCanvas Canvas { get; } = canvas;
+
+        public static implicit operator SKSurface(SKGLSurface surface) => surface.Fallback;
+
+        private SKSurface Fallback { get; } = fallback;
+    }
+
     public class SKPaintGLSurfaceEventArgs : EventArgs
     {
-        public SKPaintGLSurfaceEventArgs(SKSurface surface, GRBackendRenderTarget? renderTarget, GRSurfaceOrigin origin, SKImageInfo info, SKImageInfo rawInfo)
+        public SKPaintGLSurfaceEventArgs(SKGLSurface surface, SKGLRenderTarget renderTarget, GRSurfaceOrigin origin, SKImageInfo info, SKImageInfo rawInfo)
         {
             Surface = surface;
-            BackendRenderTarget = renderTarget!;
+            BackendRenderTarget = renderTarget;
             Origin = origin;
             Info = info;
             RawInfo = rawInfo;
         }
 
-        public SKSurface Surface { get; }
-        public GRBackendRenderTarget BackendRenderTarget { get; }
+        public SKGLSurface Surface { get; }
+        public SKGLRenderTarget BackendRenderTarget { get; }
         public GRSurfaceOrigin Origin { get; }
         public SKImageInfo Info { get; }
         public SKImageInfo RawInfo { get; }
@@ -230,11 +254,19 @@ namespace SkiaSharp.Views.Maui
 namespace SkiaSharp.Views.Maui.Controls
 {
     /// <summary>
-    /// SkiaSharp's GL view. MauiLite draws with Skia's CPU raster, so it is a canvas view whose paint event carries
-    /// GL-shaped arguments (no render target). With <see cref="HasRenderLoop"/> it repaints on every frame.
+    /// SkiaSharp's GL view, drawn by MauiLite on the CPU. Its painter draws on a recording canvas, and the frame replays
+    /// the recording strip by strip on the drawing threads: the Poképark scales its pixel-art world up to the whole
+    /// screen each frame, which on one core cost 29 ms of the console's 37 ms frame (2026-11-27). The paint event
+    /// carries GL-shaped arguments (a render target of the surface's size). With <see cref="HasRenderLoop"/> it
+    /// repaints on every frame.
     /// </summary>
     public class SKGLView : SKCanvasView
     {
+        SKPicture? _recording;
+        SKSizeI _recordedSize;
+        readonly SKSurface _fallback = SKSurface.Create(new SKImageInfo(1, 1, SKColorType.Rgba8888, SKAlphaType.Premul));
+        string? _painter;
+
         public static readonly BindableProperty HasRenderLoopProperty = BindableProperty.Create(nameof(HasRenderLoop), typeof(bool), typeof(SKGLView), false,
             propertyChanged: (bindable, _, now) =>
             {
@@ -244,15 +276,74 @@ namespace SkiaSharp.Views.Maui.Controls
 
         public bool HasRenderLoop { get => (bool)GetValue(HasRenderLoopProperty)!; set => SetValue(HasRenderLoopProperty, value); }
 
-        public new event EventHandler<SKPaintGLSurfaceEventArgs>? PaintSurface;
+        EventHandler<SKPaintGLSurfaceEventArgs>? _paintGLSurface;
 
-        protected virtual void OnPaintSurface(SKPaintGLSurfaceEventArgs e) => PaintSurface?.Invoke(this, e);
-
-        protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+        public new event EventHandler<SKPaintGLSurfaceEventArgs>? PaintSurface
         {
-            OnPaintSurface(new SKPaintGLSurfaceEventArgs(e.Surface, null, GRSurfaceOrigin.TopLeft, e.Info, e.RawInfo));
+            add { _paintGLSurface += value; _painter = null; }
+            remove { _paintGLSurface -= value; _painter = null; }
+        }
+
+        internal override string PrepareName =>
+            _painter ??= "paint " + (_paintGLSurface?.GetInvocationList() is [var first, ..] ? Painter(first) : "SKGLView");
+
+        protected virtual void OnPaintSurface(SKPaintGLSurfaceEventArgs e) => _paintGLSurface?.Invoke(this, e);
+
+        // The painter runs here, on the UI thread, and records; the drawing threads replay it in Draw.
+        internal override void Prepare(SKSize size, float scale)
+        {
+            var width = (int)Math.Ceiling(size.Width);
+            var height = (int)Math.Ceiling(size.Height);
+            if (width <= 0 || height <= 0 || (!NeedsPaint && _recordedSize == new SKSizeI(width, height)))
+                return;
+            NeedsPaint = false;
+            _recordedSize = new SKSizeI(width, height);
+            var raw = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
+            var info = raw;
+            using var recorder = new SKPictureRecorder();
+            var canvas = recorder.BeginRecording(SKRect.Create(width, height));
+            if (IgnorePixelScaling)
+            {
+                info = raw.WithSize((int)(width / scale), (int)(height / scale));
+                canvas.Scale(scale);
+            }
+            CanvasSize = new SKSize(info.Width, info.Height);
+            var started = System.Diagnostics.Stopwatch.GetTimestamp();
+            try
+            {
+                OnPaintSurface(new SKPaintGLSurfaceEventArgs(new SKGLSurface(canvas, _fallback), new SKGLRenderTarget(info.Width, info.Height),
+                    GRSurfaceOrigin.TopLeft, info, raw));
+            }
+            catch (Exception error)
+            {
+                UiErrors.Report(error, $"{GetType().Name}.PaintSurface");
+            }
+            finally
+            {
+                PKForge.MauiLite.PaintClock.Add(System.Diagnostics.Stopwatch.GetTimestamp() - started);
+            }
+            _recording?.Dispose();
+            _recording = recorder.EndRecording();
             if (HasRenderLoop)
                 InvalidateSurface();
+        }
+
+        // Each strip replays the recording within the view's bounds: a Clear in it stays inside the view.
+        internal override void Draw(SKCanvas canvas, SKSize size, float scale)
+        {
+            base.Draw(canvas, size, scale);
+            if (_recording is null || size.Width <= 0 || size.Height <= 0)
+                return;
+            canvas.Save();
+            canvas.ClipRect(SKRect.Create(size));
+            if (PaintsOwnOpacity && Opacity < 1)
+            {
+                using var faded = new SKPaint { Color = SKColors.White.WithAlpha((byte)Math.Round(Opacity * 255)) };
+                canvas.DrawPicture(_recording, faded);
+            }
+            else
+                canvas.DrawPicture(_recording);
+            canvas.Restore();
         }
     }
 }
